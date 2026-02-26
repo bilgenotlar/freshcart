@@ -1,0 +1,16 @@
+{
+  "short_name": "FreshCart",
+  "name": "FreshCart Market Listem",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3737/3737372.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#0f1711",
+  "background_color": "#0f1711"
+}
