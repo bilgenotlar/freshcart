@@ -151,7 +151,7 @@ export default function App() {
         },
         signal: controller.signal,
         body: JSON.stringify({
-          model: 'openrouter/free',
+          model: 'google/gemma-3-27b-it:free',
           messages: [{
             role: 'user',
             content: [
@@ -331,7 +331,7 @@ export default function App() {
                   <Camera size={32} />
                   <span className="text-xs font-black">FİŞ FOTOĞRAFI EKLE</span>
                 </button>
-                <input type="file" ref={fileInputRef} accept="image/*" capture="environment" className="hidden"
+                <input type="file" ref={fileInputRef} accept="image/*" className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
