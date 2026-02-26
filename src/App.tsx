@@ -18,7 +18,8 @@ import {
   Sun,
   Moon,
   Share2,
-  TrendingUp
+  TrendingUp,
+  BarChart2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -104,7 +105,7 @@ interface ReceiptPhoto extends ReceiptMeta {
 }
 
 export default function App() {
-  const [view, setView] = useState<'list' | 'history' | 'receipts' | 'settings'>('list');
+  const [view, setView] = useState<'list' | 'history' | 'receipts' | 'stats' | 'settings'>('list');
   
   // Yerel Hafızadan Yükleme Fonksiyonu
   const getSavedData = (key: string, defaultValue: any) => {
@@ -461,6 +462,110 @@ export default function App() {
               </motion.div>
             )}
 
+            {view === 'stats' && (
+              <motion.div key="stats" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 pt-2">
+
+                {(() => {
+                  if (receipts.length === 0) return (
+                    <p className="text-center text-[11px] opacity-30 font-bold uppercase pt-10">Henüz fiş eklenmedi</p>
+                  );
+
+                  // Tüm fişlerden aylık ve haftalık data üret
+                  const monthly: Record<string, number> = {};
+                  const byMarket: Record<string, number> = {};
+
+                  receipts.forEach(r => {
+                    if (!r.total || !r.receiptDate) return;
+                    const d = new Date(r.receiptDate);
+                    const monthKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                    monthly[monthKey] = (monthly[monthKey] || 0) + r.total;
+                    if (r.storeName) byMarket[r.storeName] = (byMarket[r.storeName] || 0) + r.total;
+                  });
+
+                  const monthKeys = Object.keys(monthly).sort();
+                  const maxMonthly = Math.max(...Object.values(monthly), 1);
+
+                  const marketKeys = Object.keys(byMarket).sort((a,b) => byMarket[b] - byMarket[a]);
+                  const maxMarket = Math.max(...Object.values(byMarket), 1);
+
+                  const grandTotal = receipts.reduce((s, r) => s + (r.total || 0), 0);
+                  const receiptCount = receipts.filter(r => r.total).length;
+
+                  return (
+                    <>
+                      {/* Özet kartlar */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="card-bg rounded-2xl p-4">
+                          <p className="text-[9px] font-black opacity-40 uppercase tracking-widest mb-1">Toplam Harcama</p>
+                          <p className="text-lg font-black text-[var(--primary-color)]">{grandTotal.toLocaleString('tr-TR', {minimumFractionDigits:2})} ₺</p>
+                        </div>
+                        <div className="card-bg rounded-2xl p-4">
+                          <p className="text-[9px] font-black opacity-40 uppercase tracking-widest mb-1">Fiş Sayısı</p>
+                          <p className="text-lg font-black text-[var(--primary-color)]">{receiptCount} fiş</p>
+                        </div>
+                        {receiptCount > 0 && (
+                          <div className="card-bg rounded-2xl p-4 col-span-2">
+                            <p className="text-[9px] font-black opacity-40 uppercase tracking-widest mb-1">Fiş Başı Ortalama</p>
+                            <p className="text-lg font-black text-[var(--primary-color)]">{(grandTotal / receiptCount).toLocaleString('tr-TR', {minimumFractionDigits:2})} ₺</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Aylık harcama grafiği */}
+                      {monthKeys.length > 0 && (
+                        <section className="card-bg rounded-2xl p-4">
+                          <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-4">Aylık Harcama</h2>
+                          <div className="space-y-3">
+                            {monthKeys.map(mk => {
+                              const [y, m] = mk.split('-');
+                              const label = new Date(parseInt(y), parseInt(m)-1).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+                              const val = monthly[mk];
+                              const pct = (val / maxMonthly) * 100;
+                              return (
+                                <div key={mk}>
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[10px] font-bold opacity-60 capitalize">{label}</span>
+                                    <span className="text-[11px] font-black text-[var(--primary-color)]">{val.toLocaleString('tr-TR', {minimumFractionDigits:2})} ₺</span>
+                                  </div>
+                                  <div className="w-full h-2 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full bg-[var(--primary-color)] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </section>
+                      )}
+
+                      {/* Market bazlı harcama */}
+                      {marketKeys.length > 0 && (
+                        <section className="card-bg rounded-2xl p-4">
+                          <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-4">Markete Göre</h2>
+                          <div className="space-y-3">
+                            {marketKeys.map(mk => {
+                              const val = byMarket[mk];
+                              const pct = (val / maxMarket) * 100;
+                              return (
+                                <div key={mk}>
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[10px] font-bold opacity-60">{mk}</span>
+                                    <span className="text-[11px] font-black text-[var(--primary-color)]">{val.toLocaleString('tr-TR', {minimumFractionDigits:2})} ₺</span>
+                                  </div>
+                                  <div className="w-full h-2 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full bg-[var(--primary-color)] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </section>
+                      )}
+                    </>
+                  );
+                })()}
+              </motion.div>
+            )}
+
             {view === 'settings' && (
               <motion.div key="settings" className="space-y-8 pt-2">
                 <section>
@@ -481,11 +586,12 @@ export default function App() {
           </AnimatePresence>
         </main>
 
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-inherit/40 backdrop-blur-xl border-t border-black/5 dark:border-white/5 pb-10 pt-4 px-6 flex justify-around">
-          <NavButton active={view === 'list'} icon={<List size={26}/>} label="LİSTE" onClick={() => setView('list')} />
-          <NavButton active={view === 'receipts'} icon={<Camera size={26}/>} label="FİŞLER" onClick={() => setView('receipts')} />
-          <NavButton active={view === 'history'} icon={<HistoryIcon size={26}/>} label="GEÇMİŞ" onClick={() => setView('history')} />
-          <NavButton active={view === 'settings'} icon={<Settings size={26}/>} label="AYARLAR" onClick={() => setView('settings')} />
+        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-inherit/40 backdrop-blur-xl border-t border-black/5 dark:border-white/5 pb-10 pt-4 px-4 flex justify-around">
+          <NavButton active={view === 'list'} icon={<List size={24}/>} label="LİSTE" onClick={() => setView('list')} />
+          <NavButton active={view === 'receipts'} icon={<Camera size={24}/>} label="FİŞLER" onClick={() => setView('receipts')} />
+          <NavButton active={view === 'stats'} icon={<BarChart2 size={24}/>} label="ÖZET" onClick={() => setView('stats')} />
+          <NavButton active={view === 'history'} icon={<HistoryIcon size={24}/>} label="GEÇMİŞ" onClick={() => setView('history')} />
+          <NavButton active={view === 'settings'} icon={<Settings size={24}/>} label="AYARLAR" onClick={() => setView('settings')} />
         </nav>
       </div>
     </div>
