@@ -22,6 +22,49 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+// ── IndexedDB yardımcısı ──────────────────────────────────────────
+const DB_NAME = 'freshcart';
+const STORE = 'photos';
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function savePhoto(id: string, dataUrl: string) {
+  const db = await openDB();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put(dataUrl, id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getPhoto(id: string): Promise<string> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(STORE).objectStore(STORE).get(id);
+    req.onsuccess = () => resolve(req.result || '');
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deletePhoto(id: string) {
+  const db = await openDB();
+  return new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+// ─────────────────────────────────────────────────────────────────
+
 // Tipler
 type Category = 'MANAV' | 'SÜT' | 'ET' | 'KİLER' | 'DİĞER';
 
@@ -47,13 +90,17 @@ interface HistoryTrip {
   detailedItems: HistoryItem[];
 }
 
-interface ReceiptPhoto {
+// imageUrl artık IndexedDB'de, metadata localStorage'da
+interface ReceiptMeta {
   id: string;
-  date: string;       // kayıt tarihi (otomatik)
-  receiptDate: string; // fişin gerçek tarihi (kullanıcı girer) YYYY-MM-DD
-  imageUrl: string;
+  date: string;
+  receiptDate: string;
   storeName?: string;
   total?: number;
+}
+
+interface ReceiptPhoto extends ReceiptMeta {
+  imageUrl: string; // sadece bellekte, render için
 }
 
 export default function App() {
@@ -69,9 +116,17 @@ export default function App() {
   const [items, setItems] = useState<GroceryItem[]>(() => getSavedData('fc_items', []));
   const [history, setHistory] = useState<HistoryTrip[]>(() => getSavedData('fc_history', []));
   const [markets, setMarkets] = useState<string[]>(() => getSavedData('fc_markets', ['Genel', 'Migros', 'BİM', 'A101', 'Şok', 'Kasap']));
-  const [receipts, setReceipts] = useState<ReceiptPhoto[]>(() => getSavedData('fc_receipts', []));
+  const [receipts, setReceipts] = useState<ReceiptPhoto[]>([]);
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => getSavedData('fc_darkmode', true));
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
+
+  // Uygulama açılınca: metadata localStorage'dan, fotoğraflar IndexedDB'den yükle
+  useEffect(() => {
+    const metas: ReceiptMeta[] = getSavedData('fc_receipts_meta', []);
+    if (metas.length === 0) return;
+    Promise.all(metas.map(async m => ({ ...m, imageUrl: await getPhoto(m.id) })))
+      .then(loaded => setReceipts(loaded));
+  }, []);
   
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
@@ -87,7 +142,11 @@ export default function App() {
   useEffect(() => { localStorage.setItem('fc_items', JSON.stringify(items)); }, [items]);
   useEffect(() => { localStorage.setItem('fc_history', JSON.stringify(history)); }, [history]);
   useEffect(() => { localStorage.setItem('fc_markets', JSON.stringify(markets)); }, [markets]);
-  useEffect(() => { try { localStorage.setItem('fc_receipts', JSON.stringify(receipts)); } catch { console.warn('Fiş kaydedilemedi, depolama dolu.'); } }, [receipts]);
+  useEffect(() => {
+    // Sadece metadata localStorage'a (fotoğraf hariç)
+    const metas: ReceiptMeta[] = receipts.map(({ id, date, receiptDate, storeName, total }) => ({ id, date, receiptDate, storeName, total }));
+    localStorage.setItem('fc_receipts_meta', JSON.stringify(metas));
+  }, [receipts]);
   useEffect(() => { localStorage.setItem('fc_darkmode', JSON.stringify(isDarkMode)); }, [isDarkMode]);
 
   // Tema Uygulama
@@ -280,13 +339,15 @@ export default function App() {
                     const img = new Image();
                     img.onload = () => {
                       const canvas = document.createElement('canvas');
-                      const MAX = 600;
+                      const MAX = 1200;
                       const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
                       canvas.width = Math.round(img.width * ratio);
                       canvas.height = Math.round(img.height * ratio);
                       canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-                      const imageUrl = canvas.toDataURL('image/jpeg', 0.5);
-                      setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), receiptDate: new Date().toISOString().split('T')[0], imageUrl }, ...prev]);
+                      const imageUrl = canvas.toDataURL('image/jpeg', 0.8);
+                      const id = Date.now().toString();
+                      savePhoto(id, imageUrl); // IndexedDB'ye kaydet
+                      setReceipts(prev => [{ id, date: new Date().toLocaleString('tr-TR'), receiptDate: new Date().toISOString().split('T')[0], imageUrl }, ...prev]);
                       URL.revokeObjectURL(url);
                     };
                     img.src = url;
@@ -376,7 +437,7 @@ export default function App() {
                                   </p>
                                 )}
                               </div>
-                              <button onClick={() => setReceipts(receipts.filter(x => x.id !== r.id))} className="p-1 opacity-30 text-red-500 flex-shrink-0">
+                              <button onClick={() => { deletePhoto(r.id); setReceipts(receipts.filter(x => x.id !== r.id)); }} className="p-1 opacity-30 text-red-500 flex-shrink-0">
                                 <Trash2 size={18}/>
                               </button>
                             </div>
