@@ -137,7 +137,7 @@ export default function App() {
     if (!apiKey) { alert('Lütfen önce Ayarlar bölümünden API anahtarınızı girin.'); setView('settings'); return; }
     setAnalyzingId(receipt.id);
     try {
-      const prompt = 'Bu bir market fişi. Sadece şu JSON formatında yanıt ver, başka hiçbir şey yazma: {"storeName":"Market adı","date":"GG/AA/YYYY","total":125.00} Toplam tutarı fişin en altındaki TOPLAM veya GENEL TOPLAM satırından al. Sayı olarak ver, TL/₺ sembolü olmadan.';
+      const prompt = 'Bu bir market fişi. Sadece şu JSON formatında yanıt ver, başka hiçbir şey yazma: {"storeName":"Market adı","date":"GG/AA/YYYY","total":1582.83} Önemli: Toplam tutarı fişin en altındaki TOPLAM veya GENEL TOPLAM satırından al. Türkçe fişlerde binlik ayraç olarak boşluk kullanılır (örnek: 1 582,83 = 1582.83). Rakamı noktalı ondalık sayı olarak ver, TL/₺ sembolü ve boşluk olmadan.';
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 30000);
@@ -335,21 +335,30 @@ export default function App() {
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
+                    // Önce FileReader ile oku
                     const reader = new FileReader();
                     reader.onloadend = () => {
                       const dataUrl = reader.result as string;
-                      // Canvas ile sıkıştır - galeri fotoğrafları çok büyük olabiliyor
                       const img = new Image();
                       img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX = 1400;
-                        const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
-                        canvas.width = Math.round(img.width * ratio);
-                        canvas.height = Math.round(img.height * ratio);
-                        const ctx = canvas.getContext('2d')!;
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        const imageUrl = canvas.toDataURL('image/jpeg', 0.85);
-                        setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
+                        try {
+                          const canvas = document.createElement('canvas');
+                          const MAX = 1400;
+                          const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+                          canvas.width = Math.round(img.width * ratio);
+                          canvas.height = Math.round(img.height * ratio);
+                          const ctx = canvas.getContext('2d')!;
+                          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                          const imageUrl = canvas.toDataURL('image/jpeg', 0.85);
+                          setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
+                        } catch {
+                          // Canvas başarısız olursa orijinali kullan
+                          setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: dataUrl }, ...prev]);
+                        }
+                      };
+                      img.onerror = () => {
+                        // Resim yüklenemezse direkt kaydet
+                        setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: dataUrl }, ...prev]);
                       };
                       img.src = dataUrl;
                     };
