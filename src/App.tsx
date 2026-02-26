@@ -18,10 +18,7 @@ import {
   Sun,
   Moon,
   Share2,
-  ScanLine,
-  Loader,
-  TrendingUp,
-  KeyRound
+  TrendingUp
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -50,17 +47,12 @@ interface HistoryTrip {
   detailedItems: HistoryItem[];
 }
 
-interface ReceiptAnalysis {
-  storeName: string;
-  date: string;
-  total: number;
-}
-
 interface ReceiptPhoto {
   id: string;
   date: string;
   imageUrl: string;
-  analysis?: ReceiptAnalysis;
+  storeName?: string;
+  total?: number;
 }
 
 export default function App() {
@@ -78,9 +70,6 @@ export default function App() {
   const [markets, setMarkets] = useState<string[]>(() => getSavedData('fc_markets', ['Genel', 'Migros', 'BİM', 'A101', 'Şok', 'Kasap']));
   const [receipts, setReceipts] = useState<ReceiptPhoto[]>(() => getSavedData('fc_receipts', []));
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => getSavedData('fc_darkmode', true));
-  const [apiKey, setApiKey] = useState<string>(() => getSavedData('fc_apikey', ''));
-  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
-  const [selectedReceipt, setSelectedReceipt] = useState<ReceiptPhoto | null>(null);
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
   
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
@@ -99,7 +88,6 @@ export default function App() {
   useEffect(() => { localStorage.setItem('fc_markets', JSON.stringify(markets)); }, [markets]);
   useEffect(() => { localStorage.setItem('fc_receipts', JSON.stringify(receipts)); }, [receipts]);
   useEffect(() => { localStorage.setItem('fc_darkmode', JSON.stringify(isDarkMode)); }, [isDarkMode]);
-  useEffect(() => { localStorage.setItem('fc_apikey', JSON.stringify(apiKey)); }, [apiKey]);
 
   // Tema Uygulama
   useEffect(() => {
@@ -131,54 +119,6 @@ export default function App() {
     setHistory([newTrip, ...history]);
     setItems(items.filter(i => !i.completed));
     setView('history');
-  };
-
-  const analyzeReceipt = async (receipt: ReceiptPhoto) => {
-    if (!apiKey) { alert('Lütfen önce Ayarlar bölümünden API anahtarınızı girin.'); setView('settings'); return; }
-    setAnalyzingId(receipt.id);
-    try {
-      const prompt = 'Bu bir market fişi. Sadece şu JSON formatında yanıt ver, başka hiçbir şey yazma: {"storeName":"Market adı","date":"GG/AA/YYYY","total":1582.83} Önemli: Toplam tutarı fişin en altındaki TOPLAM veya GENEL TOPLAM satırından al. Türkçe fişlerde binlik ayraç olarak boşluk kullanılır (örnek: 1 582,83 = 1582.83). Rakamı noktalı ondalık sayı olarak ver, TL/₺ sembolü ve boşluk olmadan.';
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000);
-
-      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-          'HTTP-Referer': 'https://bilgenotlar.github.io/freshcart',
-        },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: 'nvidia/nemotron-nano-12b-v2-vl:free',
-          messages: [{
-            role: 'user',
-            content: [
-              { type: 'image_url', image_url: { url: receipt.imageUrl } },
-              { type: 'text', text: prompt }
-            ]
-          }]
-        })
-      });
-      clearTimeout(timeout);
-
-      const data = await response.json();
-      if (data.error) throw new Error(`Hata: ${data.error.message}`);
-      const text = data.choices?.[0]?.message?.content || '';
-      if (!text) throw new Error('Model boş yanıt döndü. Tekrar deneyin.');
-      const clean = text.replace(/```json|```/g, '').trim();
-      const analysis: ReceiptAnalysis = JSON.parse(clean);
-      setReceipts(prev => prev.map(r => r.id === receipt.id ? { ...r, analysis } : r));
-    } catch (err: any) {
-      if (err?.name === 'AbortError') {
-        alert('Zaman aşımı: 30 saniyede yanıt gelmedi.');
-      } else {
-        alert(`Hata: ${err?.message || JSON.stringify(err)}`);
-      }
-    } finally {
-      setAnalyzingId(null);
-    }
   };
 
   const shareViaWhatsApp = async () => {
@@ -326,7 +266,7 @@ export default function App() {
             {view === 'receipts' && (
               <motion.div key="receipts" className="space-y-4 pt-2">
 
-                {/* Fotoğraf ekle butonu - canvas ile sıkıştırarak kaydeder */}
+                {/* Fotoğraf ekle butonu */}
                 <button onClick={() => fileInputRef.current?.click()} className="w-full h-32 border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center gap-2 text-[var(--primary-color)] bg-primary/5 active:bg-primary/10">
                   <Camera size={32} />
                   <span className="text-xs font-black">FİŞ FOTOĞRAFI EKLE</span>
@@ -335,32 +275,10 @@ export default function App() {
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    // Önce FileReader ile oku
                     const reader = new FileReader();
                     reader.onloadend = () => {
                       const dataUrl = reader.result as string;
-                      const img = new Image();
-                      img.onload = () => {
-                        try {
-                          const canvas = document.createElement('canvas');
-                          const MAX = 1400;
-                          const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
-                          canvas.width = Math.round(img.width * ratio);
-                          canvas.height = Math.round(img.height * ratio);
-                          const ctx = canvas.getContext('2d')!;
-                          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                          const imageUrl = canvas.toDataURL('image/jpeg', 0.85);
-                          setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
-                        } catch {
-                          // Canvas başarısız olursa orijinali kullan
-                          setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: dataUrl }, ...prev]);
-                        }
-                      };
-                      img.onerror = () => {
-                        // Resim yüklenemezse direkt kaydet
-                        setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: dataUrl }, ...prev]);
-                      };
-                      img.src = dataUrl;
+                      setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: dataUrl }, ...prev]);
                     };
                     reader.readAsDataURL(file);
                     e.target.value = '';
@@ -371,38 +289,44 @@ export default function App() {
                 <div className="space-y-3">
                   {receipts.map(r => (
                     <div key={r.id} className="card-bg rounded-2xl overflow-hidden">
-                      <div className="flex gap-3 p-3 items-center">
-                        {/* Fotoğrafa tıklayınca tam ekran */}
+                      <div className="flex gap-3 p-3 items-start">
                         <img
                           src={r.imageUrl}
                           className="w-20 h-20 object-cover rounded-xl flex-shrink-0 cursor-pointer active:opacity-80"
                           alt="Fiş"
                           onClick={() => setViewingPhoto(r.imageUrl)}
                         />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[10px] opacity-40 font-bold uppercase mb-1">{r.date}</p>
-                          {r.analysis ? (
-                            <div>
-                              <p className="font-black text-sm text-[var(--primary-color)]">{r.analysis.storeName}</p>
-                              <p className="text-[10px] opacity-50 font-bold">{r.analysis.date}</p>
-                              <p className="text-xl font-black mt-1 flex items-center gap-1">
-                                <TrendingUp size={14} className="text-[var(--primary-color)]" />
-                                {r.analysis.total.toFixed(2)} ₺
-                              </p>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => analyzeReceipt(r)}
-                              disabled={analyzingId === r.id}
-                              className="flex items-center gap-2 bg-[var(--primary-color)] text-black px-3 py-2 rounded-xl text-[10px] font-black active:scale-95 disabled:opacity-50"
-                            >
-                              {analyzingId === r.id
-                                ? <><Loader size={12} className="animate-spin" /> OKUNUYOR...</>
-                                : <><ScanLine size={12} /> TOPLAMI OKU</>}
-                            </button>
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <p className="text-[10px] opacity-40 font-bold uppercase">{r.date}</p>
+                          {/* Market seçici */}
+                          <select
+                            value={r.storeName || ''}
+                            onChange={(e) => setReceipts(prev => prev.map(x => x.id === r.id ? { ...x, storeName: e.target.value } : x))}
+                            className="w-full h-9 px-3 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-xs font-black text-[var(--primary-color)] appearance-none"
+                          >
+                            <option value="">Market seç...</option>
+                            {markets.map(m => <option key={m} value={m}>{m}</option>)}
+                          </select>
+                          {/* Tutar girişi */}
+                          <div className="relative">
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              placeholder="Toplam tutar"
+                              value={r.total ?? ''}
+                              onChange={(e) => setReceipts(prev => prev.map(x => x.id === r.id ? { ...x, total: parseFloat(e.target.value) || undefined } : x))}
+                              className="w-full h-9 pl-3 pr-8 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-black"
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black opacity-40">₺</span>
+                          </div>
+                          {/* Kaydedildiyse özet göster */}
+                          {r.storeName && r.total && (
+                            <p className="text-base font-black flex items-center gap-1 text-[var(--primary-color)]">
+                              <TrendingUp size={13} /> {r.total.toFixed(2)} ₺
+                            </p>
                           )}
                         </div>
-                        <button onClick={() => setReceipts(receipts.filter(x => x.id !== r.id))} className="self-start p-1 opacity-30 text-red-500">
+                        <button onClick={() => setReceipts(receipts.filter(x => x.id !== r.id))} className="p-1 opacity-30 text-red-500 flex-shrink-0">
                           <Trash2 size={18}/>
                         </button>
                       </div>
@@ -410,25 +334,12 @@ export default function App() {
                   ))}
                 </div>
 
-                {/* Tam Ekran Fotoğraf Görüntüleyici */}
+                {/* Tam Ekran Fotoğraf */}
                 <AnimatePresence>
                   {viewingPhoto && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
-                      onClick={() => setViewingPhoto(null)}
-                    >
-                      <button className="absolute top-6 right-6 bg-white/10 p-3 rounded-full z-10">
-                        <X size={22} className="text-white" />
-                      </button>
-                      <img
-                        src={viewingPhoto}
-                        className="max-w-full max-h-full object-contain"
-                        alt="Fiş"
-                        onClick={e => e.stopPropagation()}
-                      />
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black flex items-center justify-center" onClick={() => setViewingPhoto(null)}>
+                      <button className="absolute top-6 right-6 bg-white/10 p-3 rounded-full z-10"><X size={22} className="text-white" /></button>
+                      <img src={viewingPhoto} className="max-w-full max-h-full object-contain" alt="Fiş" onClick={e => e.stopPropagation()} />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -443,21 +354,6 @@ export default function App() {
                   <div className="card-bg p-4 rounded-2xl flex items-center justify-between" onClick={() => setIsDarkMode(!isDarkMode)}>
                     <div className="flex items-center gap-3">{isDarkMode ? <Moon size={20} className="text-[#13ec5b]" /> : <Sun size={20} className="text-orange-500" />}<span className="text-sm font-bold">{isDarkMode ? 'Karanlık Mod' : 'Açık Mod'}</span></div>
                     <div className={`w-14 h-8 rounded-full relative transition-colors duration-300 ${isDarkMode ? 'bg-[#13ec5b]' : 'bg-slate-300'}`}><div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${isDarkMode ? 'left-7' : 'left-1'}`} /></div>
-                  </div>
-                </section>
-                <section>
-                  <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-1">AI Fiş Okuma</h2>
-                  <p className="text-[10px] opacity-40 font-bold mb-4">Fişleri otomatik okutmak için OpenRouter API anahtarı gerekli.<br/>Türkiye'de çalışır, <span className="text-[var(--primary-color)]">ücretsiz</span> modeller mevcut.<br/>openrouter.ai adresinden kayıt ol → API Keys → Create Key.</p>
-                  <div className="card-bg p-4 rounded-2xl">
-                    <div className="flex items-center gap-2 mb-3"><KeyRound size={16} className="text-[var(--primary-color)]" /><span className="text-xs font-black uppercase tracking-wider">API Anahtarı</span></div>
-                    <input
-                      type="password"
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      placeholder="sk-or-..."
-                      className="w-full h-12 px-4 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-mono"
-                    />
-                    {apiKey && <p className="text-[10px] text-[var(--primary-color)] font-black mt-2 flex items-center gap-1"><Check size={10}/> API anahtarı kayıtlı</p>}
                   </div>
                 </section>
                 <section>
