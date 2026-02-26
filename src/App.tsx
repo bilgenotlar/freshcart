@@ -142,7 +142,10 @@ export default function App() {
     if (!apiKey) { alert('Lütfen önce Ayarlar bölümünden API anahtarınızı girin.'); setView('settings'); return; }
     setAnalyzingId(receipt.id);
     try {
-      const prompt = 'Bu bir market fişi fotoğrafı. Lütfen fişi analiz et ve SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma: {"storeName":"Market adı","date":"Fişteki tarih","items":[{"name":"Ürün adı","price":12.50}],"total":125.00} Fiyatları sayı olarak ver, TL sembolü olmadan. Ürün adlarını Türkçe yaz.';
+      const prompt = 'Bu bir market fişi fotoğrafı. Fişi dikkatlice tara, TÜM ürünleri eksiksiz listele. Sadece JSON döndür, başka hiçbir şey yazma: {"storeName":"Market adı","date":"GG/AA/YYYY","items":[{"name":"Ürün adı","price":12.50}],"total":125.00} Kurallar: 1) Fiyatları sayı olarak ver, TL/₺ sembolü olmadan. 2) Aynı ürün birden fazla satırda görünüyorsa her birini ayrı ekle. 3) Toplam fiyatı fişin en altındaki TOPLAM/GENEL TOPLAM satırından al. 4) Ürün adlarını olduğu gibi yaz.';
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
 
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -151,6 +154,7 @@ export default function App() {
           'Authorization': `Bearer ${apiKey}`,
           'HTTP-Referer': 'https://bilgenotlar.github.io/freshcart',
         },
+        signal: controller.signal,
         body: JSON.stringify({
           model: 'openrouter/free',
           messages: [{
@@ -162,18 +166,25 @@ export default function App() {
           }]
         })
       });
+      clearTimeout(timeout);
 
       const data = await response.json();
       console.log('OpenRouter yanıtı:', JSON.stringify(data));
       if (data.error) throw new Error(`Hata: ${data.error.message}`);
       const text = data.choices?.[0]?.message?.content || '';
+      console.log('Model metni:', text);
+      if (!text) throw new Error('Model boş yanıt döndü. Lütfen tekrar deneyin.');
       const clean = text.replace(/```json|```/g, '').trim();
       const analysis: ReceiptAnalysis = JSON.parse(clean);
       setReceipts(prev => prev.map(r => r.id === receipt.id ? { ...r, analysis } : r));
       setSelectedReceipt({ ...receipt, analysis });
     } catch (err: any) {
       console.error('Fiş okuma hatası:', err);
-      alert(`Hata: ${err?.message || JSON.stringify(err)}`);
+      if (err?.name === 'AbortError') {
+        alert('Zaman aşımı: 30 saniyede yanıt gelmedi. İnternet bağlantınızı kontrol edin.');
+      } else {
+        alert(`Hata: ${err?.message || JSON.stringify(err)}`);
+      }
     } finally {
       setAnalyzingId(null);
     }
@@ -369,7 +380,7 @@ export default function App() {
                             <button onClick={() => setSelectedReceipt(null)} className="p-2 opacity-40"><X size={22}/></button>
                           </div>
                         </div>
-                        <div className="px-6 py-4">
+                        <div className="px-6 py-4 pb-10">
                           {selectedReceipt.analysis ? (
                             <>
                               <div className="space-y-2 mb-6">
