@@ -152,7 +152,7 @@ export default function App() {
           'HTTP-Referer': 'https://bilgenotlar.github.io/freshcart',
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-4-maverick:free',
+          model: 'openrouter/free',
           messages: [{
             role: 'user',
             content: [
