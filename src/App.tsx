@@ -117,7 +117,7 @@ export default function App() {
     setView('history');
   };
 
-  const shareViaWhatsApp = () => {
+  const shareViaWhatsApp = async () => {
     if (activeItems.length === 0 && completedItems.length === 0) return;
 
     const allItems = [...activeItems, ...completedItems];
@@ -145,6 +145,16 @@ export default function App() {
       message += ` (${completedItems.length} alındı)`;
     }
     message += `\n\n💬 *Eklemek veya çıkarmak istediğin bir şey varsa bana yaz* 😊\n\n🔗 _bilgenotlar.github.io/freshcart_`;
+
+    // PWA ve mobilde Web Share API dene, olmazsa WhatsApp linkine düş
+    if (navigator.share) {
+      try {
+        await navigator.share({ text: message });
+        return;
+      } catch (err) {
+        // Kullanıcı iptal ettiyse sessizce geç
+      }
+    }
 
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encoded}`, '_blank');
