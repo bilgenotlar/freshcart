@@ -275,12 +275,20 @@ export default function App() {
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      const dataUrl = reader.result as string;
-                      setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: dataUrl }, ...prev]);
+                    const objectUrl = URL.createObjectURL(file);
+                    const img = new Image();
+                    img.onload = () => {
+                      const canvas = document.createElement('canvas');
+                      const MAX = 1200;
+                      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+                      canvas.width = Math.round(img.width * ratio);
+                      canvas.height = Math.round(img.height * ratio);
+                      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+                      const imageUrl = canvas.toDataURL('image/jpeg', 0.8);
+                      setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
+                      URL.revokeObjectURL(objectUrl);
                     };
-                    reader.readAsDataURL(file);
+                    img.src = objectUrl;
                     e.target.value = '';
                   }}
                 />
