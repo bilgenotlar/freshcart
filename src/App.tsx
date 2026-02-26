@@ -151,7 +151,7 @@ export default function App() {
         },
         signal: controller.signal,
         body: JSON.stringify({
-          model: 'google/gemma-3-27b-it:free',
+          model: 'mistralai/mistral-small-3.1-24b-instruct:free',
           messages: [{
             role: 'user',
             content: [
@@ -335,20 +335,12 @@ export default function App() {
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
-                    const img = new Image();
-                    const objectUrl = URL.createObjectURL(file);
-                    img.onload = () => {
-                      const canvas = document.createElement('canvas');
-                      const MAX = 1200;
-                      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
-                      canvas.width = img.width * ratio;
-                      canvas.height = img.height * ratio;
-                      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-                      const imageUrl = canvas.toDataURL('image/jpeg', 0.82);
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const imageUrl = reader.result as string;
                       setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
-                      URL.revokeObjectURL(objectUrl);
                     };
-                    img.src = objectUrl;
+                    reader.readAsDataURL(file);
                     e.target.value = '';
                   }}
                 />
