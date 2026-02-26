@@ -50,15 +50,9 @@ interface HistoryTrip {
   detailedItems: HistoryItem[];
 }
 
-interface ReceiptAnalysisItem {
-  name: string;
-  price: number;
-}
-
 interface ReceiptAnalysis {
   storeName: string;
   date: string;
-  items: ReceiptAnalysisItem[];
   total: number;
 }
 
@@ -87,6 +81,7 @@ export default function App() {
   const [apiKey, setApiKey] = useState<string>(() => getSavedData('fc_apikey', ''));
   const [analyzingId, setAnalyzingId] = useState<string | null>(null);
   const [selectedReceipt, setSelectedReceipt] = useState<ReceiptPhoto | null>(null);
+  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
   
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
@@ -142,7 +137,7 @@ export default function App() {
     if (!apiKey) { alert('Lütfen önce Ayarlar bölümünden API anahtarınızı girin.'); setView('settings'); return; }
     setAnalyzingId(receipt.id);
     try {
-      const prompt = 'Bu bir market fişi fotoğrafı. Fişi dikkatlice tara, TÜM ürünleri eksiksiz listele. Sadece JSON döndür, başka hiçbir şey yazma: {"storeName":"Market adı","date":"GG/AA/YYYY","items":[{"name":"Ürün adı","price":12.50}],"total":125.00} Kurallar: 1) Fiyatları sayı olarak ver, TL/₺ sembolü olmadan. 2) Aynı ürün birden fazla satırda görünüyorsa her birini ayrı ekle. 3) Toplam fiyatı fişin en altındaki TOPLAM/GENEL TOPLAM satırından al. 4) Ürün adlarını olduğu gibi yaz.';
+      const prompt = 'Bu bir market fişi. Sadece şu JSON formatında yanıt ver, başka hiçbir şey yazma: {"storeName":"Market adı","date":"GG/AA/YYYY","total":125.00} Toplam tutarı fişin en altındaki TOPLAM veya GENEL TOPLAM satırından al. Sayı olarak ver, TL/₺ sembolü olmadan.';
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 30000);
@@ -169,19 +164,15 @@ export default function App() {
       clearTimeout(timeout);
 
       const data = await response.json();
-      console.log('OpenRouter yanıtı:', JSON.stringify(data));
       if (data.error) throw new Error(`Hata: ${data.error.message}`);
       const text = data.choices?.[0]?.message?.content || '';
-      console.log('Model metni:', text);
-      if (!text) throw new Error('Model boş yanıt döndü. Lütfen tekrar deneyin.');
+      if (!text) throw new Error('Model boş yanıt döndü. Tekrar deneyin.');
       const clean = text.replace(/```json|```/g, '').trim();
       const analysis: ReceiptAnalysis = JSON.parse(clean);
       setReceipts(prev => prev.map(r => r.id === receipt.id ? { ...r, analysis } : r));
-      setSelectedReceipt({ ...receipt, analysis });
     } catch (err: any) {
-      console.error('Fiş okuma hatası:', err);
       if (err?.name === 'AbortError') {
-        alert('Zaman aşımı: 30 saniyede yanıt gelmedi. İnternet bağlantınızı kontrol edin.');
+        alert('Zaman aşımı: 30 saniyede yanıt gelmedi.');
       } else {
         alert(`Hata: ${err?.message || JSON.stringify(err)}`);
       }
@@ -334,81 +325,100 @@ export default function App() {
 
             {view === 'receipts' && (
               <motion.div key="receipts" className="space-y-4 pt-2">
-                <button onClick={() => fileInputRef.current?.click()} className="w-full h-32 border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center gap-2 text-[var(--primary-color)] bg-primary/5 active:bg-primary/10"><Camera size={32} /> <span className="text-xs font-black">FİŞ FOTOĞRAFI EKLE</span></button>
-                <input type="file" ref={fileInputRef} onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => setReceipts([{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: reader.result as string }, ...receipts]); reader.readAsDataURL(file); } }} accept="image/*" className="hidden" />
-                
+
+                {/* Fotoğraf ekle butonu - canvas ile sıkıştırarak kaydeder */}
+                <button onClick={() => fileInputRef.current?.click()} className="w-full h-32 border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center gap-2 text-[var(--primary-color)] bg-primary/5 active:bg-primary/10">
+                  <Camera size={32} />
+                  <span className="text-xs font-black">FİŞ FOTOĞRAFI EKLE</span>
+                </button>
+                <input type="file" ref={fileInputRef} accept="image/*" capture="environment" className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const img = new Image();
+                    const objectUrl = URL.createObjectURL(file);
+                    img.onload = () => {
+                      const canvas = document.createElement('canvas');
+                      const MAX = 1200;
+                      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+                      canvas.width = img.width * ratio;
+                      canvas.height = img.height * ratio;
+                      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+                      const imageUrl = canvas.toDataURL('image/jpeg', 0.82);
+                      setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
+                      URL.revokeObjectURL(objectUrl);
+                    };
+                    img.src = objectUrl;
+                    e.target.value = '';
+                  }}
+                />
+
+                {/* Fiş listesi */}
                 <div className="space-y-3">
                   {receipts.map(r => (
                     <div key={r.id} className="card-bg rounded-2xl overflow-hidden">
-                      <div className="flex gap-3 p-3">
-                        <img src={r.imageUrl} className="w-20 h-20 object-cover rounded-xl flex-shrink-0 cursor-pointer" alt="Fiş" onClick={() => setSelectedReceipt(r)} />
+                      <div className="flex gap-3 p-3 items-center">
+                        {/* Fotoğrafa tıklayınca tam ekran */}
+                        <img
+                          src={r.imageUrl}
+                          className="w-20 h-20 object-cover rounded-xl flex-shrink-0 cursor-pointer active:opacity-80"
+                          alt="Fiş"
+                          onClick={() => setViewingPhoto(r.imageUrl)}
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="text-[10px] opacity-40 font-bold uppercase mb-1">{r.date}</p>
                           {r.analysis ? (
-                            <div className="cursor-pointer" onClick={() => setSelectedReceipt(r)}>
+                            <div>
                               <p className="font-black text-sm text-[var(--primary-color)]">{r.analysis.storeName}</p>
-                              <p className="text-xs font-bold opacity-60">{r.analysis.items.length} ürün</p>
-                              <p className="text-base font-black mt-1 flex items-center gap-1"><TrendingUp size={14} className="text-[var(--primary-color)]" />{r.analysis.total.toFixed(2)} ₺</p>
+                              <p className="text-[10px] opacity-50 font-bold">{r.analysis.date}</p>
+                              <p className="text-xl font-black mt-1 flex items-center gap-1">
+                                <TrendingUp size={14} className="text-[var(--primary-color)]" />
+                                {r.analysis.total.toFixed(2)} ₺
+                              </p>
                             </div>
                           ) : (
                             <button
                               onClick={() => analyzeReceipt(r)}
                               disabled={analyzingId === r.id}
-                              className="mt-1 flex items-center gap-2 bg-[var(--primary-color)] text-black px-3 py-2 rounded-xl text-[10px] font-black active:scale-95 disabled:opacity-50"
+                              className="flex items-center gap-2 bg-[var(--primary-color)] text-black px-3 py-2 rounded-xl text-[10px] font-black active:scale-95 disabled:opacity-50"
                             >
-                              {analyzingId === r.id ? <><Loader size={12} className="animate-spin" /> OKUNUYOR...</> : <><ScanLine size={12} /> AI İLE OKU</>}
+                              {analyzingId === r.id
+                                ? <><Loader size={12} className="animate-spin" /> OKUNUYOR...</>
+                                : <><ScanLine size={12} /> TOPLAMI OKU</>}
                             </button>
                           )}
                         </div>
-                        <button onClick={() => { setReceipts(receipts.filter(x => x.id !== r.id)); if (selectedReceipt?.id === r.id) setSelectedReceipt(null); }} className="self-start p-1 opacity-30 text-red-500"><Trash2 size={18}/></button>
+                        <button onClick={() => setReceipts(receipts.filter(x => x.id !== r.id))} className="self-start p-1 opacity-30 text-red-500">
+                          <Trash2 size={18}/>
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Detay Modal */}
+                {/* Tam Ekran Fotoğraf Görüntüleyici */}
                 <AnimatePresence>
-                  {selectedReceipt && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center" onClick={() => setSelectedReceipt(null)}>
-                      <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25 }} className="w-full max-w-md bg-[var(--bg-main)] rounded-t-3xl max-h-[85dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-                        <div className="sticky top-0 bg-[var(--bg-main)] px-6 pt-6 pb-3 border-b border-black/5 dark:border-white/5">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h2 className="font-black text-lg">{selectedReceipt.analysis?.storeName || 'Fiş Detayı'}</h2>
-                              <p className="text-[10px] opacity-40 font-bold uppercase">{selectedReceipt.analysis?.date || selectedReceipt.date}</p>
-                            </div>
-                            <button onClick={() => setSelectedReceipt(null)} className="p-2 opacity-40"><X size={22}/></button>
-                          </div>
-                        </div>
-                        <div className="px-6 py-4 pb-10">
-                          {selectedReceipt.analysis ? (
-                            <>
-                              <div className="space-y-2 mb-6">
-                                {selectedReceipt.analysis.items.map((item, idx) => (
-                                  <div key={idx} className="flex items-center justify-between py-2 border-b border-black/5 dark:border-white/5">
-                                    <span className="text-sm font-bold">{item.name}</span>
-                                    <span className="text-sm font-black text-[var(--primary-color)]">{item.price.toFixed(2)} ₺</span>
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="bg-[var(--primary-color)] text-black p-4 rounded-2xl flex items-center justify-between">
-                                <span className="font-black text-sm uppercase tracking-wider">TOPLAM</span>
-                                <span className="font-black text-2xl">{selectedReceipt.analysis.total.toFixed(2)} ₺</span>
-                              </div>
-                            </>
-                          ) : (
-                            <div className="text-center py-8">
-                              <img src={selectedReceipt.imageUrl} className="w-full rounded-2xl mb-4" alt="Fiş" />
-                              <button onClick={() => { analyzeReceipt(selectedReceipt); }} disabled={analyzingId === selectedReceipt.id} className="flex items-center gap-2 mx-auto bg-[var(--primary-color)] text-black px-6 py-3 rounded-xl text-sm font-black">
-                                {analyzingId === selectedReceipt.id ? <><Loader size={16} className="animate-spin" /> OKUNUYOR...</> : <><ScanLine size={16} /> AI İLE FİŞİ OKU</>}
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
+                  {viewingPhoto && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-[100] bg-black flex items-center justify-center"
+                      onClick={() => setViewingPhoto(null)}
+                    >
+                      <button className="absolute top-6 right-6 bg-white/10 p-3 rounded-full z-10">
+                        <X size={22} className="text-white" />
+                      </button>
+                      <img
+                        src={viewingPhoto}
+                        className="max-w-full max-h-full object-contain"
+                        alt="Fiş"
+                        onClick={e => e.stopPropagation()}
+                      />
                     </motion.div>
                   )}
                 </AnimatePresence>
+
               </motion.div>
             )}
 
