@@ -16,7 +16,8 @@ import {
   Camera,
   Tag,
   Sun,
-  Moon
+  Moon,
+  Share2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -116,6 +117,39 @@ export default function App() {
     setView('history');
   };
 
+  const shareViaWhatsApp = () => {
+    if (activeItems.length === 0 && completedItems.length === 0) return;
+
+    const allItems = [...activeItems, ...completedItems];
+    const byMarket: Record<string, GroceryItem[]> = {};
+    allItems.forEach(item => {
+      if (!byMarket[item.market]) byMarket[item.market] = [];
+      byMarket[item.market].push(item);
+    });
+
+    let message = `🛒 *FreshCart Alışveriş Listem*\n`;
+    message += `📅 ${today}\n\n`;
+
+    Object.entries(byMarket).forEach(([market, marketItems]) => {
+      message += `🏪 *${market.toUpperCase()}*\n`;
+      marketItems.forEach(item => {
+        const check = item.completed ? '✅' : '☐';
+        message += `  ${check} ${item.name}\n`;
+      });
+      message += '\n';
+    });
+
+    message += `─────────────────\n`;
+    message += `📦 Toplam: ${allItems.length} ürün`;
+    if (completedItems.length > 0) {
+      message += ` (${completedItems.length} alındı)`;
+    }
+    message += `\n\n🔗 _FreshCart ile hazırlandı_\n_bilgenotlar.github.io/freshcart_`;
+
+    const encoded = encodeURIComponent(message);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-[var(--bg-main)] flex justify-center transition-colors duration-300 select-none">
       <div className="w-full max-w-md relative flex flex-col h-[100dvh] overflow-hidden border-x border-black/5 dark:border-white/5 shadow-2xl">
@@ -131,6 +165,15 @@ export default function App() {
             <div className="opacity-60 text-[10px] font-bold flex items-center gap-1 uppercase tracking-tighter">
               <Calendar size={12} className="text-[var(--primary-color)]" /> {today}
             </div>
+            {view === 'list' && (activeItems.length > 0 || completedItems.length > 0) && (
+              <button
+                onClick={shareViaWhatsApp}
+                className="flex items-center gap-1.5 bg-[#25D366] text-white px-3 py-2 rounded-xl text-[10px] font-black shadow-lg active:scale-95 transition-transform"
+              >
+                <Share2 size={13} />
+                <span>PAYLAŞ</span>
+              </button>
+            )}
           </div>
         </header>
 
