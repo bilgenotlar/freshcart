@@ -161,13 +161,16 @@ export default function App() {
         }
       );
       const data = await response.json();
+      console.log('Gemini yanıtı:', JSON.stringify(data));
+      if (data.error) throw new Error(`Gemini hatası: ${data.error.message}`);
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
       const clean = text.replace(/```json|```/g, '').trim();
       const analysis: ReceiptAnalysis = JSON.parse(clean);
       setReceipts(prev => prev.map(r => r.id === receipt.id ? { ...r, analysis } : r));
       setSelectedReceipt({ ...receipt, analysis });
-    } catch (err) {
-      alert('Fiş okunamadı. Fotoğrafın net olduğundan emin olun.');
+    } catch (err: any) {
+      console.error('Fiş okuma hatası:', err);
+      alert(`Hata: ${err?.message || JSON.stringify(err)}`);
     } finally {
       setAnalyzingId(null);
     }
