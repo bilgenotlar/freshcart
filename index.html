@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="FreshCart">
+    
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3737/3737372.png">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3737/3737372.png">
+
+    <title>FreshCart | Market Listem</title>
+    
+    <style>
+      /* Mobil tarayıcılarda adres çubuğu rengini ve kaydırma efektlerini düzenlemek için */
+      :root {
+        --bg-color: #0f1711; /* Koyu mod varsayılan arka plan */
+      }
+      html, body {
+        background-color: var(--bg-color);
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Tarayıcıdaki gereksiz kaydırmaları engeller */
+        height: 100%;
+        -webkit-tap-highlight-color: transparent; /* Mobilde tıklama gölgesini siler */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
