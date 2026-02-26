@@ -151,7 +151,7 @@ export default function App() {
         },
         signal: controller.signal,
         body: JSON.stringify({
-          model: 'mistralai/mistral-small-3.1-24b-instruct:free',
+          model: 'nvidia/nemotron-nano-12b-v2-vl:free',
           messages: [{
             role: 'user',
             content: [
@@ -337,8 +337,21 @@ export default function App() {
                     if (!file) return;
                     const reader = new FileReader();
                     reader.onloadend = () => {
-                      const imageUrl = reader.result as string;
-                      setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
+                      const dataUrl = reader.result as string;
+                      // Canvas ile sıkıştır - galeri fotoğrafları çok büyük olabiliyor
+                      const img = new Image();
+                      img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX = 1400;
+                        const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+                        canvas.width = Math.round(img.width * ratio);
+                        canvas.height = Math.round(img.height * ratio);
+                        const ctx = canvas.getContext('2d')!;
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        const imageUrl = canvas.toDataURL('image/jpeg', 0.85);
+                        setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
+                      };
+                      img.src = dataUrl;
                     };
                     reader.readAsDataURL(file);
                     e.target.value = '';
