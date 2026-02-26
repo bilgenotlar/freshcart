@@ -139,31 +139,34 @@ export default function App() {
   };
 
   const analyzeReceipt = async (receipt: ReceiptPhoto) => {
-    if (!apiKey) { alert('Lütfen önce Ayarlar bölümünden Gemini API anahtarınızı girin.'); setView('settings'); return; }
+    if (!apiKey) { alert('Lütfen önce Ayarlar bölümünden API anahtarınızı girin.'); setView('settings'); return; }
     setAnalyzingId(receipt.id);
     try {
-      const base64Data = receipt.imageUrl.split(',')[1];
-      const mediaType = receipt.imageUrl.split(';')[0].split(':')[1];
-      const prompt = 'Bu bir market fişi fotoğrafı. Lütfen fişi analiz et ve aşağıdaki JSON formatında yanıt ver. Başka hiçbir şey yazma, sadece JSON: {"storeName": "Market adı", "date": "Fişteki tarih (yoksa boş bırak)", "items": [{"name": "Ürün adı", "price": 12.50}], "total": 125.00} Fiyatları sayısal değer olarak ver (TL sembolü olmadan). Ürün adlarını Türkçe yaz.';
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+      const prompt = 'Bu bir market fişi fotoğrafı. Lütfen fişi analiz et ve SADECE aşağıdaki JSON formatında yanıt ver, başka hiçbir şey yazma: {"storeName":"Market adı","date":"Fişteki tarih","items":[{"name":"Ürün adı","price":12.50}],"total":125.00} Fiyatları sayı olarak ver, TL sembolü olmadan. Ürün adlarını Türkçe yaz.';
+
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://bilgenotlar.github.io/freshcart',
+        },
         body: JSON.stringify({
-            contents: [{
-              parts: [
-                { inline_data: { mime_type: mediaType, data: base64Data } },
-                { text: prompt }
-              ]
-            }]
-          })
-        }
-      );
+          model: 'google/gemini-2.0-flash-exp:free',
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image_url', image_url: { url: receipt.imageUrl } },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      });
+
       const data = await response.json();
-      console.log('Gemini yanıtı:', JSON.stringify(data));
-      if (data.error) throw new Error(`Gemini hatası: ${data.error.message}`);
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      console.log('OpenRouter yanıtı:', JSON.stringify(data));
+      if (data.error) throw new Error(`Hata: ${data.error.message}`);
+      const text = data.choices?.[0]?.message?.content || '';
       const clean = text.replace(/```json|```/g, '').trim();
       const analysis: ReceiptAnalysis = JSON.parse(clean);
       setReceipts(prev => prev.map(r => r.id === receipt.id ? { ...r, analysis } : r));
@@ -409,14 +412,14 @@ export default function App() {
                 </section>
                 <section>
                   <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-1">AI Fiş Okuma</h2>
-                  <p className="text-[10px] opacity-40 font-bold mb-4">Fişleri otomatik okutmak için Gemini API anahtarı gerekli. <br/>aistudio.google.com adresinden <span className="text-[var(--primary-color)]">ücretsiz</span> alabilirsiniz. Kredi kartı gerekmez.</p>
+                  <p className="text-[10px] opacity-40 font-bold mb-4">Fişleri otomatik okutmak için OpenRouter API anahtarı gerekli.<br/>Türkiye'de çalışır, <span className="text-[var(--primary-color)]">ücretsiz</span> modeller mevcut.<br/>openrouter.ai adresinden kayıt ol → API Keys → Create Key.</p>
                   <div className="card-bg p-4 rounded-2xl">
                     <div className="flex items-center gap-2 mb-3"><KeyRound size={16} className="text-[var(--primary-color)]" /><span className="text-xs font-black uppercase tracking-wider">API Anahtarı</span></div>
                     <input
                       type="password"
                       value={apiKey}
                       onChange={(e) => setApiKey(e.target.value)}
-                      placeholder="AIza..."
+                      placeholder="sk-or-..."
                       className="w-full h-12 px-4 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-mono"
                     />
                     {apiKey && <p className="text-[10px] text-[var(--primary-color)] font-black mt-2 flex items-center gap-1"><Check size={10}/> API anahtarı kayıtlı</p>}
