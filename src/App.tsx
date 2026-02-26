@@ -49,7 +49,8 @@ interface HistoryTrip {
 
 interface ReceiptPhoto {
   id: string;
-  date: string;
+  date: string;       // kayıt tarihi (otomatik)
+  receiptDate: string; // fişin gerçek tarihi (kullanıcı girer) YYYY-MM-DD
   imageUrl: string;
   storeName?: string;
   total?: number;
@@ -285,7 +286,7 @@ export default function App() {
                       canvas.height = Math.round(img.height * ratio);
                       canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
                       const imageUrl = canvas.toDataURL('image/jpeg', 0.5);
-                      setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
+                      setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), receiptDate: new Date().toISOString().split('T')[0], imageUrl }, ...prev]);
                       URL.revokeObjectURL(url);
                     };
                     img.src = url;
@@ -293,54 +294,98 @@ export default function App() {
                   }}
                 />
 
-                {/* Fiş listesi */}
-                <div className="space-y-3">
-                  {receipts.map(r => (
-                    <div key={r.id} className="card-bg rounded-2xl overflow-hidden">
-                      <div className="flex gap-3 p-3 items-start">
-                        <img
-                          src={r.imageUrl}
-                          className="w-20 h-20 object-cover rounded-xl flex-shrink-0 cursor-pointer active:opacity-80"
-                          alt="Fiş"
-                          onClick={() => setViewingPhoto(r.imageUrl)}
-                        />
-                        <div className="flex-1 min-w-0 space-y-2">
-                          <p className="text-[10px] opacity-40 font-bold uppercase">{r.date}</p>
-                          {/* Market seçici */}
-                          <select
-                            value={r.storeName || ''}
-                            onChange={(e) => setReceipts(prev => prev.map(x => x.id === r.id ? { ...x, storeName: e.target.value } : x))}
-                            className="w-full h-9 px-3 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-xs font-black text-[var(--primary-color)] appearance-none"
-                          >
-                            <option value="">Market seç...</option>
-                            {markets.map(m => <option key={m} value={m}>{m}</option>)}
-                          </select>
-                          {/* Tutar girişi */}
-                          <div className="relative">
-                            <input
-                              type="number"
-                              inputMode="decimal"
-                              placeholder="Toplam tutar"
-                              value={r.total ?? ''}
-                              onChange={(e) => setReceipts(prev => prev.map(x => x.id === r.id ? { ...x, total: parseFloat(e.target.value) || undefined } : x))}
-                              className="w-full h-9 pl-3 pr-8 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-black"
-                            />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black opacity-40">₺</span>
-                          </div>
-                          {/* Kaydedildiyse özet göster */}
-                          {r.storeName && r.total && (
-                            <p className="text-base font-black flex items-center gap-1 text-[var(--primary-color)]">
-                              <TrendingUp size={13} /> {r.total.toFixed(2)} ₺
-                            </p>
+                {/* Fişler - tarihe göre gruplandırılmış */}
+                {(() => {
+                  // Tarihe göre grupla
+                  const groups: Record<string, ReceiptPhoto[]> = {};
+                  receipts.forEach(r => {
+                    const key = r.receiptDate || r.date.split(' ')[0];
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push(r);
+                  });
+                  // Tarihe göre sırala (yeniden eskiye)
+                  const sortedDates = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+
+                  if (sortedDates.length === 0) return (
+                    <p className="text-center text-[11px] opacity-30 font-bold uppercase pt-4">Henüz fiş eklenmedi</p>
+                  );
+
+                  return sortedDates.map(dateKey => {
+                    const dayReceipts = groups[dateKey];
+                    const dayTotal = dayReceipts.reduce((sum, r) => sum + (r.total || 0), 0);
+                    const label = (() => {
+                      try {
+                        const d = new Date(dateKey);
+                        return d.toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                      } catch { return dateKey; }
+                    })();
+
+                    return (
+                      <div key={dateKey} className="space-y-2">
+                        {/* Gün başlığı + günlük toplam */}
+                        <div className="flex items-center justify-between px-1 pt-2">
+                          <h3 className="text-[10px] font-black uppercase tracking-widest opacity-50">{label}</h3>
+                          {dayTotal > 0 && (
+                            <span className="text-xs font-black text-[var(--primary-color)] flex items-center gap-1">
+                              <TrendingUp size={11} /> {dayTotal.toFixed(2)} ₺
+                            </span>
                           )}
                         </div>
-                        <button onClick={() => setReceipts(receipts.filter(x => x.id !== r.id))} className="p-1 opacity-30 text-red-500 flex-shrink-0">
-                          <Trash2 size={18}/>
-                        </button>
+
+                        {dayReceipts.map(r => (
+                          <div key={r.id} className="card-bg rounded-2xl overflow-hidden">
+                            <div className="flex gap-3 p-3 items-start">
+                              <img
+                                src={r.imageUrl}
+                                className="w-20 h-20 object-cover rounded-xl flex-shrink-0 cursor-pointer active:opacity-80"
+                                alt="Fiş"
+                                onClick={() => setViewingPhoto(r.imageUrl)}
+                              />
+                              <div className="flex-1 min-w-0 space-y-2">
+                                {/* Tarih seçici */}
+                                <input
+                                  type="date"
+                                  value={r.receiptDate || ''}
+                                  onChange={(e) => setReceipts(prev => prev.map(x => x.id === r.id ? { ...x, receiptDate: e.target.value } : x))}
+                                  className="w-full h-9 px-3 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-xs font-bold"
+                                />
+                                {/* Market seçici */}
+                                <select
+                                  value={r.storeName || ''}
+                                  onChange={(e) => setReceipts(prev => prev.map(x => x.id === r.id ? { ...x, storeName: e.target.value } : x))}
+                                  className="w-full h-9 px-3 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-xs font-black text-[var(--primary-color)] appearance-none"
+                                >
+                                  <option value="">Market seç...</option>
+                                  {markets.map(m => <option key={m} value={m}>{m}</option>)}
+                                </select>
+                                {/* Tutar girişi */}
+                                <div className="relative">
+                                  <input
+                                    type="number"
+                                    inputMode="decimal"
+                                    placeholder="Toplam tutar"
+                                    value={r.total ?? ''}
+                                    onChange={(e) => setReceipts(prev => prev.map(x => x.id === r.id ? { ...x, total: parseFloat(e.target.value) || undefined } : x))}
+                                    className="w-full h-9 pl-3 pr-8 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-black"
+                                  />
+                                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black opacity-40">₺</span>
+                                </div>
+                                {r.storeName && r.total && (
+                                  <p className="text-sm font-black flex items-center gap-1 text-[var(--primary-color)]">
+                                    <TrendingUp size={12} /> {r.total.toFixed(2)} ₺
+                                  </p>
+                                )}
+                              </div>
+                              <button onClick={() => setReceipts(receipts.filter(x => x.id !== r.id))} className="p-1 opacity-30 text-red-500 flex-shrink-0">
+                                <Trash2 size={18}/>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    );
+                  });
+                })()}
 
                 {/* Tam Ekran Fotoğraf */}
                 <AnimatePresence>
