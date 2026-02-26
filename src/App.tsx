@@ -271,7 +271,7 @@ export default function App() {
                   <Camera size={32} />
                   <span className="text-xs font-black">FİŞ FOTOĞRAFI EKLE</span>
                 </button>
-                <input type="file" ref={fileInputRef} onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: reader.result as string }, ...prev]); reader.readAsDataURL(file); } }} accept="image/*" className="hidden" />
+                <input type="file" ref={fileInputRef} onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: reader.result as string }, ...prev]); reader.readAsDataURL(file); } }} accept="image/*" capture="environment" className="hidden" />
 
                 {/* Fiş listesi */}
                 <div className="space-y-3">
