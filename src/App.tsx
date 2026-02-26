@@ -267,31 +267,41 @@ export default function App() {
               <motion.div key="receipts" className="space-y-4 pt-2">
 
                 {/* Fotoğraf ekle butonu */}
-                <button onClick={() => fileInputRef.current?.click()} className="w-full h-32 border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center gap-2 text-[var(--primary-color)] bg-primary/5 active:bg-primary/10">
+                <label className="w-full h-32 border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center gap-2 text-[var(--primary-color)] bg-primary/5 active:bg-primary/10 cursor-pointer">
                   <Camera size={32} />
                   <span className="text-xs font-black">FİŞ FOTOĞRAFI EKLE</span>
-                </button>
-                <input type="file" ref={fileInputRef} accept="image/*" className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    const objectUrl = URL.createObjectURL(file);
-                    const img = new Image();
-                    img.onload = () => {
-                      const canvas = document.createElement('canvas');
-                      const MAX = 1200;
-                      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
-                      canvas.width = Math.round(img.width * ratio);
-                      canvas.height = Math.round(img.height * ratio);
-                      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-                      const imageUrl = canvas.toDataURL('image/jpeg', 0.8);
-                      setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
-                      URL.revokeObjectURL(objectUrl);
-                    };
-                    img.src = objectUrl;
-                    e.target.value = '';
-                  }}
-                />
+                  <input type="file" ref={fileInputRef} accept="image/*" className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        const dataUrl = reader.result as string;
+                        const img = new Image();
+                        img.onload = () => {
+                          try {
+                            const canvas = document.createElement('canvas');
+                            const MAX = 1200;
+                            const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+                            canvas.width = Math.round(img.width * ratio);
+                            canvas.height = Math.round(img.height * ratio);
+                            canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+                            const imageUrl = canvas.toDataURL('image/jpeg', 0.8);
+                            setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
+                          } catch {
+                            setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: dataUrl }, ...prev]);
+                          }
+                        };
+                        img.onerror = () => {
+                          setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: dataUrl }, ...prev]);
+                        };
+                        img.src = dataUrl;
+                      };
+                      reader.readAsDataURL(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
 
                 {/* Fiş listesi */}
                 <div className="space-y-3">
