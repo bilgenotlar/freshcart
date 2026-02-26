@@ -86,7 +86,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem('fc_items', JSON.stringify(items)); }, [items]);
   useEffect(() => { localStorage.setItem('fc_history', JSON.stringify(history)); }, [history]);
   useEffect(() => { localStorage.setItem('fc_markets', JSON.stringify(markets)); }, [markets]);
-  useEffect(() => { localStorage.setItem('fc_receipts', JSON.stringify(receipts)); }, [receipts]);
+  useEffect(() => { try { localStorage.setItem('fc_receipts', JSON.stringify(receipts)); } catch { console.warn('Fiş kaydedilemedi, depolama dolu.'); } }, [receipts]);
   useEffect(() => { localStorage.setItem('fc_darkmode', JSON.stringify(isDarkMode)); }, [isDarkMode]);
 
   // Tema Uygulama
@@ -271,7 +271,27 @@ export default function App() {
                   <Camera size={32} />
                   <span className="text-xs font-black">FİŞ FOTOĞRAFI EKLE</span>
                 </button>
-                <input type="file" ref={fileInputRef} onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: reader.result as string }, ...prev]); reader.readAsDataURL(file); } }} accept="image/*" capture="environment" className="hidden" />
+                <input type="file" ref={fileInputRef} accept="image/*" capture="environment" className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const url = URL.createObjectURL(file);
+                    const img = new Image();
+                    img.onload = () => {
+                      const canvas = document.createElement('canvas');
+                      const MAX = 600;
+                      const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+                      canvas.width = Math.round(img.width * ratio);
+                      canvas.height = Math.round(img.height * ratio);
+                      canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+                      const imageUrl = canvas.toDataURL('image/jpeg', 0.5);
+                      setReceipts(prev => [{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl }, ...prev]);
+                      URL.revokeObjectURL(url);
+                    };
+                    img.src = url;
+                    e.target.value = '';
+                  }}
+                />
 
                 {/* Fiş listesi */}
                 <div className="space-y-3">
