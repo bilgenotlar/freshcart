@@ -17,7 +17,11 @@ import {
   Tag,
   Sun,
   Moon,
-  Share2
+  Share2,
+  ScanLine,
+  Loader,
+  TrendingUp,
+  KeyRound
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -46,10 +50,23 @@ interface HistoryTrip {
   detailedItems: HistoryItem[];
 }
 
+interface ReceiptAnalysisItem {
+  name: string;
+  price: number;
+}
+
+interface ReceiptAnalysis {
+  storeName: string;
+  date: string;
+  items: ReceiptAnalysisItem[];
+  total: number;
+}
+
 interface ReceiptPhoto {
   id: string;
   date: string;
   imageUrl: string;
+  analysis?: ReceiptAnalysis;
 }
 
 export default function App() {
@@ -67,6 +84,9 @@ export default function App() {
   const [markets, setMarkets] = useState<string[]>(() => getSavedData('fc_markets', ['Genel', 'Migros', 'BİM', 'A101', 'Şok', 'Kasap']));
   const [receipts, setReceipts] = useState<ReceiptPhoto[]>(() => getSavedData('fc_receipts', []));
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => getSavedData('fc_darkmode', true));
+  const [apiKey, setApiKey] = useState<string>(() => getSavedData('fc_apikey', ''));
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<ReceiptPhoto | null>(null);
   
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
@@ -84,6 +104,7 @@ export default function App() {
   useEffect(() => { localStorage.setItem('fc_markets', JSON.stringify(markets)); }, [markets]);
   useEffect(() => { localStorage.setItem('fc_receipts', JSON.stringify(receipts)); }, [receipts]);
   useEffect(() => { localStorage.setItem('fc_darkmode', JSON.stringify(isDarkMode)); }, [isDarkMode]);
+  useEffect(() => { localStorage.setItem('fc_apikey', JSON.stringify(apiKey)); }, [apiKey]);
 
   // Tema Uygulama
   useEffect(() => {
@@ -115,6 +136,54 @@ export default function App() {
     setHistory([newTrip, ...history]);
     setItems(items.filter(i => !i.completed));
     setView('history');
+  };
+
+  const analyzeReceipt = async (receipt: ReceiptPhoto) => {
+    if (!apiKey) { alert('Lütfen önce Ayarlar bölümünden API anahtarınızı girin.'); setView('settings'); return; }
+    setAnalyzingId(receipt.id);
+    try {
+      const base64Data = receipt.imageUrl.split(',')[1];
+      const mediaType = receipt.imageUrl.split(';')[0].split(':')[1];
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-6',
+          max_tokens: 1024,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
+              { type: 'text', text: `Bu bir market fişi fotoğrafı. Lütfen fişi analiz et ve aşağıdaki JSON formatında yanıt ver. Başka hiçbir şey yazma, sadece JSON:
+{
+  "storeName": "Market adı",
+  "date": "Fişteki tarih (yoksa boş bırak)",
+  "items": [
+    { "name": "Ürün adı", "price": 12.50 }
+  ],
+  "total": 125.00
+}
+Fiyatları sayısal değer olarak ver (TL sembolü olmadan). Ürün adlarını Türkçe yaz.` }
+            ]
+          }]
+        })
+      });
+      const data = await response.json();
+      const text = data.content?.[0]?.text || '';
+      const clean = text.replace(/```json|```/g, '').trim();
+      const analysis: ReceiptAnalysis = JSON.parse(clean);
+      setReceipts(prev => prev.map(r => r.id === receipt.id ? { ...r, analysis } : r));
+      setSelectedReceipt({ ...receipt, analysis });
+    } catch (err) {
+      alert('Fiş okunamadı. Fotoğrafın net olduğundan emin olun.');
+    } finally {
+      setAnalyzingId(null);
+    }
   };
 
   const shareViaWhatsApp = async () => {
@@ -263,7 +332,79 @@ export default function App() {
               <motion.div key="receipts" className="space-y-4 pt-2">
                 <button onClick={() => fileInputRef.current?.click()} className="w-full h-32 border-2 border-dashed border-primary/20 rounded-3xl flex flex-col items-center justify-center gap-2 text-[var(--primary-color)] bg-primary/5 active:bg-primary/10"><Camera size={32} /> <span className="text-xs font-black">FİŞ FOTOĞRAFI EKLE</span></button>
                 <input type="file" ref={fileInputRef} onChange={(e) => { const file = e.target.files?.[0]; if (file) { const reader = new FileReader(); reader.onloadend = () => setReceipts([{ id: Date.now().toString(), date: new Date().toLocaleString('tr-TR'), imageUrl: reader.result as string }, ...receipts]); reader.readAsDataURL(file); } }} accept="image/*" className="hidden" />
-                <div className="grid grid-cols-2 gap-3">{receipts.map(r => (<div key={r.id} className="card-bg rounded-2xl overflow-hidden relative aspect-square"><img src={r.imageUrl} className="w-full h-full object-cover" alt="Fiş" /><button onClick={() => setReceipts(receipts.filter(x => x.id !== r.id))} className="absolute top-2 right-2 bg-black/60 p-2 rounded-full text-white"><Trash2 size={16}/></button></div>))}</div>
+                
+                <div className="space-y-3">
+                  {receipts.map(r => (
+                    <div key={r.id} className="card-bg rounded-2xl overflow-hidden">
+                      <div className="flex gap-3 p-3">
+                        <img src={r.imageUrl} className="w-20 h-20 object-cover rounded-xl flex-shrink-0 cursor-pointer" alt="Fiş" onClick={() => setSelectedReceipt(r)} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] opacity-40 font-bold uppercase mb-1">{r.date}</p>
+                          {r.analysis ? (
+                            <div className="cursor-pointer" onClick={() => setSelectedReceipt(r)}>
+                              <p className="font-black text-sm text-[var(--primary-color)]">{r.analysis.storeName}</p>
+                              <p className="text-xs font-bold opacity-60">{r.analysis.items.length} ürün</p>
+                              <p className="text-base font-black mt-1 flex items-center gap-1"><TrendingUp size={14} className="text-[var(--primary-color)]" />{r.analysis.total.toFixed(2)} ₺</p>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => analyzeReceipt(r)}
+                              disabled={analyzingId === r.id}
+                              className="mt-1 flex items-center gap-2 bg-[var(--primary-color)] text-black px-3 py-2 rounded-xl text-[10px] font-black active:scale-95 disabled:opacity-50"
+                            >
+                              {analyzingId === r.id ? <><Loader size={12} className="animate-spin" /> OKUNUYOR...</> : <><ScanLine size={12} /> AI İLE OKU</>}
+                            </button>
+                          )}
+                        </div>
+                        <button onClick={() => { setReceipts(receipts.filter(x => x.id !== r.id)); if (selectedReceipt?.id === r.id) setSelectedReceipt(null); }} className="self-start p-1 opacity-30 text-red-500"><Trash2 size={18}/></button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Detay Modal */}
+                <AnimatePresence>
+                  {selectedReceipt && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end justify-center" onClick={() => setSelectedReceipt(null)}>
+                      <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25 }} className="w-full max-w-md bg-[var(--bg-main)] rounded-t-3xl max-h-[85dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                        <div className="sticky top-0 bg-[var(--bg-main)] px-6 pt-6 pb-3 border-b border-black/5 dark:border-white/5">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h2 className="font-black text-lg">{selectedReceipt.analysis?.storeName || 'Fiş Detayı'}</h2>
+                              <p className="text-[10px] opacity-40 font-bold uppercase">{selectedReceipt.analysis?.date || selectedReceipt.date}</p>
+                            </div>
+                            <button onClick={() => setSelectedReceipt(null)} className="p-2 opacity-40"><X size={22}/></button>
+                          </div>
+                        </div>
+                        <div className="px-6 py-4">
+                          {selectedReceipt.analysis ? (
+                            <>
+                              <div className="space-y-2 mb-6">
+                                {selectedReceipt.analysis.items.map((item, idx) => (
+                                  <div key={idx} className="flex items-center justify-between py-2 border-b border-black/5 dark:border-white/5">
+                                    <span className="text-sm font-bold">{item.name}</span>
+                                    <span className="text-sm font-black text-[var(--primary-color)]">{item.price.toFixed(2)} ₺</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="bg-[var(--primary-color)] text-black p-4 rounded-2xl flex items-center justify-between">
+                                <span className="font-black text-sm uppercase tracking-wider">TOPLAM</span>
+                                <span className="font-black text-2xl">{selectedReceipt.analysis.total.toFixed(2)} ₺</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-center py-8">
+                              <img src={selectedReceipt.imageUrl} className="w-full rounded-2xl mb-4" alt="Fiş" />
+                              <button onClick={() => { analyzeReceipt(selectedReceipt); }} disabled={analyzingId === selectedReceipt.id} className="flex items-center gap-2 mx-auto bg-[var(--primary-color)] text-black px-6 py-3 rounded-xl text-sm font-black">
+                                {analyzingId === selectedReceipt.id ? <><Loader size={16} className="animate-spin" /> OKUNUYOR...</> : <><ScanLine size={16} /> AI İLE FİŞİ OKU</>}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
 
@@ -274,6 +415,21 @@ export default function App() {
                   <div className="card-bg p-4 rounded-2xl flex items-center justify-between" onClick={() => setIsDarkMode(!isDarkMode)}>
                     <div className="flex items-center gap-3">{isDarkMode ? <Moon size={20} className="text-[#13ec5b]" /> : <Sun size={20} className="text-orange-500" />}<span className="text-sm font-bold">{isDarkMode ? 'Karanlık Mod' : 'Açık Mod'}</span></div>
                     <div className={`w-14 h-8 rounded-full relative transition-colors duration-300 ${isDarkMode ? 'bg-[#13ec5b]' : 'bg-slate-300'}`}><div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${isDarkMode ? 'left-7' : 'left-1'}`} /></div>
+                  </div>
+                </section>
+                <section>
+                  <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-1">AI Fiş Okuma</h2>
+                  <p className="text-[10px] opacity-40 font-bold mb-4">Fişleri otomatik okutmak için Anthropic API anahtarı gerekli. <br/>console.anthropic.com adresinden ücretsiz alabilirsiniz.</p>
+                  <div className="card-bg p-4 rounded-2xl">
+                    <div className="flex items-center gap-2 mb-3"><KeyRound size={16} className="text-[var(--primary-color)]" /><span className="text-xs font-black uppercase tracking-wider">API Anahtarı</span></div>
+                    <input
+                      type="password"
+                      value={apiKey}
+                      onChange={(e) => setApiKey(e.target.value)}
+                      placeholder="sk-ant-..."
+                      className="w-full h-12 px-4 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-mono"
+                    />
+                    {apiKey && <p className="text-[10px] text-[var(--primary-color)] font-black mt-2 flex items-center gap-1"><Check size={10}/> API anahtarı kayıtlı</p>}
                   </div>
                 </section>
                 <section>
