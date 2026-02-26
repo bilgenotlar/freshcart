@@ -144,7 +144,7 @@ export default function App() {
     if (completedItems.length > 0) {
       message += ` (${completedItems.length} alındı)`;
     }
-    message += `\n\n💬 _Eklemek veya çıkarmak istediğin ürünler varsa bana bildir_ 😊\n\n🔗 _FreshCart ile hazırlandı_\n_bilgenotlar.github.io/freshcart_`;
+    message += `\n\n💬 *Eklemek veya çıkarmak istediğin bir şey varsa bana yaz* 😊\n\n🔗 _bilgenotlar.github.io/freshcart_`;
 
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encoded}`, '_blank');
