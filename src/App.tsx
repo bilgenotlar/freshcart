@@ -152,7 +152,7 @@ export default function App() {
           'HTTP-Referer': 'https://bilgenotlar.github.io/freshcart',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.0-flash-exp:free',
+          model: 'qwen/qwen2.5-vl-72b-instruct:free',
           messages: [{
             role: 'user',
             content: [
