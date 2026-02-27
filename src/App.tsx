@@ -152,17 +152,20 @@ export default function App() {
   useEffect(() => {
     if (!roomCode || !userName) { setIsConnected(false); return; }
     const itemsRef = ref(db, `rooms/${roomCode}/items`);
-    const unsub = onValue(itemsRef, (snapshot) => {
+    const marketsRef = ref(db, `rooms/${roomCode}/markets`);
+
+    const unsubItems = onValue(itemsRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) {
-        const loaded: GroceryItem[] = Object.values(data);
-        setItems(loaded);
-      } else {
-        setItems([]);
-      }
+      setItems(data ? Object.values(data) : []);
       setIsConnected(true);
     });
-    return () => off(itemsRef);
+
+    const unsubMarkets = onValue(marketsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data && Array.isArray(data)) setMarkets(data);
+    });
+
+    return () => { off(itemsRef); off(marketsRef); };
   }, [roomCode, userName]);
 
   // Uygulama açılınca: metadata localStorage'dan, fotoğraflar IndexedDB'den yükle
@@ -196,7 +199,13 @@ export default function App() {
   useEffect(() => { localStorage.setItem('fc_roomcode', JSON.stringify(roomCode)); }, [roomCode]);
   useEffect(() => { localStorage.setItem('fc_username', JSON.stringify(userName)); }, [userName]);
   useEffect(() => { localStorage.setItem('fc_history', JSON.stringify(history)); }, [history]);
-  useEffect(() => { localStorage.setItem('fc_markets', JSON.stringify(markets)); }, [markets]);
+  useEffect(() => {
+    localStorage.setItem('fc_markets', JSON.stringify(markets));
+    if (roomCode && userName && isConnected) {
+      const marketsRef = ref(db, `rooms/${roomCode}/markets`);
+      set(marketsRef, markets);
+    }
+  }, [markets]);
   useEffect(() => {
     // Sadece metadata localStorage'a (fotoğraf hariç)
     const metas: ReceiptMeta[] = receipts.map(({ id, date, receiptDate, storeName, total }) => ({ id, date, receiptDate, storeName, total }));
