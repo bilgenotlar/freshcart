@@ -729,6 +729,33 @@ export default function App() {
                   <div className="flex gap-2 mb-4"><input type="text" value={newMarketName} onChange={(e) => setNewMarketName(e.target.value)} placeholder="Yeni market..." className="flex-1 h-12 px-4 bg-black/5 dark:bg-white/5 rounded-xl outline-none text-sm" /><button onClick={() => { if(newMarketName.trim()) { setMarkets([...markets, newMarketName]); setNewMarketName(''); } }} className="bg-[#13ec5b] text-black px-4 rounded-xl font-black text-xs">EKLE</button></div>
                   <div className="grid grid-cols-2 gap-2">{markets.map(m => (<div key={m} className="bg-black/5 dark:bg-white/5 p-3 rounded-xl flex items-center justify-between"><span className="text-xs font-bold">{m}</span>{m !== 'Genel' && <button onClick={() => setMarkets(markets.filter(item => item !== m))} className="p-1 opacity-30 text-red-500"><X size={16}/></button>}</div>))}</div>
                 </section>
+
+                {/* Yardım */}
+                <section>
+                  <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-4">Nasıl Kullanılır?</h2>
+                  <div className="space-y-3">
+                    {[
+                      { icon: '🛒', title: 'Alışveriş Listesi', desc: 'Ürün adını yaz, sağdan marketi seç — otomatik eklenir. Ürüne dokununca sepete alınmış sayılır. "BİTİR" ile alışverişi tamamla.' },
+                      { icon: '🧾', title: 'Fişler', desc: 'Fotoğraf çek, marketi ve tutarı gir. Fişin gerçek tarihini ayarlayabilirsin. Günlük toplam otomatik hesaplanır.' },
+                      { icon: '📊', title: 'Harcama Özeti', desc: 'Aylık ve markete göre harcamalarını grafikle görürsün. Fişlere tutar girdikçe otomatik güncellenir.' },
+                      { icon: '👨‍👩‍👧', title: 'Aile Paylaşımı', desc: 'Ayarlar\'dan oda oluştur, kodu eşine gönder. Aynı kodu giren herkes listeyi gerçek zamanlı görür ve düzenleyebilir.' },
+                    ].map(item => (
+                      <div key={item.title} className="card-bg rounded-2xl p-4">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-base">{item.icon}</span>
+                          <p className="text-xs font-black">{item.title}</p>
+                        </div>
+                        <p className="text-[11px] opacity-50 font-medium leading-relaxed">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Copyright */}
+                <p className="text-center text-[9px] opacity-20 font-bold tracking-widest pb-2">
+                  © F. Kemal Sönmez — 2026
+                </p>
+
               </motion.div>
             )}
 
