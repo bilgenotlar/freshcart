@@ -5,6 +5,8 @@ PWA olarak çalışır — kurulum gerektirmez, telefona ana ekrana ekleyerek uy
 
 🔗 **[bilgenotlar.github.io/freshcart](https://bilgenotlar.github.io/freshcart)**
 
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
+
 ---
 
 ## ✨ Özellikler
@@ -44,7 +46,7 @@ PWA olarak çalışır — kurulum gerektirmez, telefona ana ekrana ekleyerek uy
 
 ## 📱 Kurulum (PWA)
 
-1. Telefonda Chrome veya Safari ile [bilgenotlar.github.io/freshcart](https://bilgenotlar.github.io/freshcart) adresini aç
+1. Telefonda Chrome veya Safari ile adresi aç
 2. **"Ana Ekrana Ekle"** seçeneğine dokun
 3. Uygulama ikonuyla direkt aç — uygulama mağazası gerekmez!
 
@@ -56,7 +58,7 @@ Tüm veriler **yalnızca kendi cihazında** saklanır:
 - Ürün listesi, geçmiş, market ayarları → `localStorage`
 - Fiş fotoğrafları → `IndexedDB` (yüzlerce fotoğraf için yeterli alan)
 
-Hiçbir veri sunucuya gönderilmez. İnternet bağlantısı sadece uygulamayı ilk yüklerken gereklidir.
+Hiçbir veri sunucuya gönderilmez.
 
 ---
 
@@ -77,29 +79,17 @@ Hiçbir veri sunucuya gönderilmez. İnternet bağlantısı sadece uygulamayı i
 ## 🚀 Geliştirme
 
 ```bash
-# Bağımlılıkları yükle
 npm install
-
-# Geliştirme sunucusunu başlat
 npm run dev
-
-# Production build al
 npm run build
 ```
 
 ---
 
-## 🗺️ Yol Haritası
+## 📄 Lisans
 
-- [ ] Aile paylaşımı — gerçek zamanlı liste senkronizasyonu (Firebase)
-- [ ] Play Store yayını (Capacitor)
-- [ ] Alışveriş hatırlatıcısı bildirimi
-
----
-
-## 📸 Ekran Görüntüleri
-
-> *(Eklenecek)*
+Bu proje [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) lisansı ile korunmaktadır.  
+Ticari amaçla kullanılamaz. Kaynak göstererek paylaşılabilir.
 
 ---
 
