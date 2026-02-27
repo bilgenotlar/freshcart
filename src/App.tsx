@@ -19,9 +19,28 @@ import {
   Moon,
   Share2,
   TrendingUp,
-  BarChart2
+  BarChart2,
+  Users,
+  Copy,
+  LogIn
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { initializeApp } from 'firebase/app';
+import { getDatabase, ref, onValue, set, remove, off } from 'firebase/database';
+
+// ── Firebase ──────────────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyC0AhpRpL2JS-_WtBenBNadgusp4FVxHPI",
+  authDomain: "harcama-takip-487405.firebaseapp.com",
+  databaseURL: "https://harcama-takip-487405-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "harcama-takip-487405",
+  storageBucket: "harcama-takip-487405.firebasestorage.app",
+  messagingSenderId: "730116755949",
+  appId: "1:730116755949:web:50119049fa3eeabf7357e4"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getDatabase(firebaseApp);
+// ─────────────────────────────────────────────────────────────────
 
 // ── IndexedDB yardımcısı ──────────────────────────────────────────
 const DB_NAME = 'freshcart';
@@ -76,6 +95,7 @@ interface GroceryItem {
   market: string;
   quantity: number;
   completed: boolean;
+  addedBy?: string;
 }
 
 interface HistoryItem {
@@ -121,6 +141,30 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => getSavedData('fc_darkmode', true));
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
 
+  // Aile paylaşımı
+  const [roomCode, setRoomCode] = useState<string>(() => getSavedData('fc_roomcode', ''));
+  const [userName, setUserName] = useState<string>(() => getSavedData('fc_username', ''));
+  const [roomInput, setRoomInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
+
+  // Firebase'e bağlan / bağlantıyı kes
+  useEffect(() => {
+    if (!roomCode || !userName) { setIsConnected(false); return; }
+    const itemsRef = ref(db, `rooms/${roomCode}/items`);
+    const unsub = onValue(itemsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const loaded: GroceryItem[] = Object.values(data);
+        setItems(loaded);
+      } else {
+        setItems([]);
+      }
+      setIsConnected(true);
+    });
+    return () => off(itemsRef);
+  }, [roomCode, userName]);
+
   // Uygulama açılınca: metadata localStorage'dan, fotoğraflar IndexedDB'den yükle
   useEffect(() => {
     const metas: ReceiptMeta[] = getSavedData('fc_receipts_meta', []);
@@ -140,7 +184,17 @@ export default function App() {
   const today = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
 
   // VERİLERİ KAYDETME (Her değişimde otomatik çalışır)
-  useEffect(() => { localStorage.setItem('fc_items', JSON.stringify(items)); }, [items]);
+  useEffect(() => {
+    localStorage.setItem('fc_items', JSON.stringify(items));
+    if (roomCode && userName && isConnected) {
+      const itemsRef = ref(db, `rooms/${roomCode}/items`);
+      const obj: Record<string, GroceryItem> = {};
+      items.forEach(i => { obj[i.id] = i; });
+      set(itemsRef, items.length > 0 ? obj : null);
+    }
+  }, [items]);
+  useEffect(() => { localStorage.setItem('fc_roomcode', JSON.stringify(roomCode)); }, [roomCode]);
+  useEffect(() => { localStorage.setItem('fc_username', JSON.stringify(userName)); }, [userName]);
   useEffect(() => { localStorage.setItem('fc_history', JSON.stringify(history)); }, [history]);
   useEffect(() => { localStorage.setItem('fc_markets', JSON.stringify(markets)); }, [markets]);
   useEffect(() => {
@@ -170,7 +224,7 @@ export default function App() {
   const addItem = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!newItemName.trim()) return;
-    setItems([{ id: Date.now().toString(), name: newItemName.trim(), category: 'DİĞER', market: selectedMarket, quantity: 1, completed: false }, ...items]);
+    setItems([{ id: Date.now().toString(), name: newItemName.trim(), category: 'DİĞER', market: selectedMarket, quantity: 1, completed: false, addedBy: userName || undefined }, ...items]);
     setNewItemName('');
     inputRef.current?.focus();
   };
@@ -289,7 +343,10 @@ export default function App() {
                         <div key={item.id} className="flex items-center justify-between card-bg p-4 rounded-2xl shadow-sm active:bg-black/5 dark:active:bg-white/5" onClick={() => setItems(items.map(i => i.id === item.id ? {...i, completed: true} : i))}>
                           <div className="flex items-center gap-3">
                             <div className="w-7 h-7 rounded-full border-2 border-primary/30 flex items-center justify-center transition-colors" />
-                            <p className="font-bold text-sm">{item.name}</p>
+                            <div>
+                              <p className="font-bold text-sm">{item.name}</p>
+                              {item.addedBy && <p className="text-[9px] opacity-40 font-bold">{item.addedBy} ekledi</p>}
+                            </div>
                           </div>
                           <button onClick={(e) => { e.stopPropagation(); setItems(items.filter(i => i.id !== item.id)); }} className="p-2 opacity-30 text-red-500"><X size={20}/></button>
                         </div>
@@ -585,6 +642,76 @@ export default function App() {
                     <div className="flex items-center gap-3">{isDarkMode ? <Moon size={20} className="text-[#13ec5b]" /> : <Sun size={20} className="text-orange-500" />}<span className="text-sm font-bold">{isDarkMode ? 'Karanlık Mod' : 'Açık Mod'}</span></div>
                     <div className={`w-14 h-8 rounded-full relative transition-colors duration-300 ${isDarkMode ? 'bg-[#13ec5b]' : 'bg-slate-300'}`}><div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all duration-300 ${isDarkMode ? 'left-7' : 'left-1'}`} /></div>
                   </div>
+                </section>
+
+                {/* Aile Paylaşımı */}
+                <section>
+                  <div className="flex items-center gap-2 mb-4">
+                    <Users size={13} className="text-[var(--primary-color)]" />
+                    <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest">Aile Paylaşımı</h2>
+                    {isConnected && <span className="ml-auto text-[9px] font-black text-[#13ec5b] flex items-center gap-1">● BAĞLI</span>}
+                  </div>
+
+                  {!roomCode ? (
+                    <div className="card-bg p-4 rounded-2xl space-y-3">
+                      <p className="text-[10px] opacity-50 font-bold">Eşinle aynı listeyi paylaşmak için bir oda oluştur veya mevcut oda kodunu gir.</p>
+                      <input
+                        type="text"
+                        placeholder="Adın (örn: Kemal)"
+                        value={nameInput}
+                        onChange={e => setNameInput(e.target.value)}
+                        className="w-full h-10 px-3 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-bold"
+                      />
+                      <button
+                        onClick={() => {
+                          if (!nameInput.trim()) return;
+                          const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+                          setUserName(nameInput.trim());
+                          setRoomCode(code);
+                        }}
+                        className="w-full h-10 bg-[var(--primary-color)] text-black rounded-xl text-xs font-black"
+                      >YENİ ODA OLUŞTUR</button>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Oda kodu gir..."
+                          value={roomInput}
+                          onChange={e => setRoomInput(e.target.value.toUpperCase())}
+                          className="flex-1 h-10 px-3 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-black tracking-widest"
+                        />
+                        <button
+                          onClick={() => {
+                            if (!nameInput.trim() || !roomInput.trim()) return;
+                            setUserName(nameInput.trim());
+                            setRoomCode(roomInput.trim());
+                          }}
+                          className="h-10 px-4 bg-black/10 dark:bg-white/10 rounded-xl text-xs font-black flex items-center gap-1"
+                        ><LogIn size={14}/> GİR</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="card-bg p-4 rounded-2xl space-y-3">
+                      <div>
+                        <p className="text-[9px] opacity-40 font-bold uppercase mb-1">Adın</p>
+                        <p className="font-black text-sm">{userName}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] opacity-40 font-bold uppercase mb-1">Oda Kodu</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-black text-xl tracking-widest text-[var(--primary-color)]">{roomCode}</p>
+                          <button
+                            onClick={() => navigator.clipboard.writeText(roomCode)}
+                            className="p-2 bg-black/5 dark:bg-white/10 rounded-lg"
+                          ><Copy size={14}/></button>
+                        </div>
+                        <p className="text-[9px] opacity-40 font-bold mt-1">Bu kodu eşine gönder, aynı kodu girerek bağlansın.</p>
+                      </div>
+                      <button
+                        onClick={() => { setRoomCode(''); setUserName(''); setRoomInput(''); setNameInput(''); }}
+                        className="text-[10px] font-black text-red-400 opacity-60"
+                      >Odadan ayrıl</button>
+                    </div>
+                  )}
                 </section>
                 <section>
                   <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-4">Marketler</h2>
