@@ -678,7 +678,7 @@ export default function App() {
                           type="text"
                           placeholder="Oda kodu gir..."
                           value={roomInput}
-                          onChange={e => setRoomInput(e.target.value.toUpperCase())}
+                          onChange={e => setRoomInput(e.target.value)}
                           className="flex-1 h-10 px-3 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-black tracking-widest"
                         />
                         <button
