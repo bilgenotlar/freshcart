@@ -86,6 +86,13 @@ npm run build
 
 ---
 
+
+## 👥 Geliştirici
+
+**F. Kemal Sonmez**
+
+---
+
 ## 📄 Lisans
 
 Bu proje [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) lisansı ile korunmaktadır.  
