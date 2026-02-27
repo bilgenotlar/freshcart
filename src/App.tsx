@@ -324,7 +324,7 @@ export default function App() {
                     <input ref={inputRef} type="text" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} placeholder="Ürün adı..." enterKeyHint="done" className="w-full h-14 pl-12 pr-4 bg-black/5 dark:bg-white/5 rounded-2xl border-none outline-none focus:ring-2 focus:ring-primary/30 text-base" />
                   </div>
                   <div className="relative">
-                    <select value={selectedMarket} onChange={(e) => { setSelectedMarket(e.target.value); if (newItemName.trim()) { setItems(prev => [{ id: Date.now().toString(), name: newItemName.trim(), category: 'DİĞER', market: e.target.value, quantity: 1, completed: false }, ...prev]); setNewItemName(''); inputRef.current?.focus(); } }} className="h-14 px-4 bg-black/5 dark:bg-white/5 rounded-2xl border-none outline-none text-xs font-black text-[var(--primary-color)] appearance-none min-w-[90px] dark:text-[#13ec5b]">
+                    <select value={selectedMarket} onChange={(e) => { setSelectedMarket(e.target.value); if (newItemName.trim()) { setItems(prev => [{ id: Date.now().toString(), name: newItemName.trim(), category: 'DİĞER', market: e.target.value, quantity: 1, completed: false, addedBy: userName || undefined }, ...prev]); setNewItemName(''); inputRef.current?.focus(); } }} className="h-14 px-4 bg-black/5 dark:bg-white/5 rounded-2xl border-none outline-none text-xs font-black text-[var(--primary-color)] appearance-none min-w-[90px] dark:text-[#13ec5b]">
                       {markets.map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
                     <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-40" />
@@ -345,7 +345,9 @@ export default function App() {
                             <div className="w-7 h-7 rounded-full border-2 border-primary/30 flex items-center justify-center transition-colors" />
                             <div>
                               <p className="font-bold text-sm">{item.name}</p>
-                              {item.addedBy && <p className="text-[9px] opacity-40 font-bold">{item.addedBy} ekledi</p>}
+                              {item.addedBy && item.addedBy.trim() && (
+                                <p className="text-[9px] text-[var(--primary-color)] font-black opacity-70">{item.addedBy} ekledi</p>
+                              )}
                             </div>
                           </div>
                           <button onClick={(e) => { e.stopPropagation(); setItems(items.filter(i => i.id !== item.id)); }} className="p-2 opacity-30 text-red-500"><X size={20}/></button>
