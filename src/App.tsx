@@ -158,7 +158,14 @@ export default function App() {
 
   const activeItems = useMemo(() => items.filter(i => !i.completed), [items]);
   const completedItems = useMemo(() => items.filter(i => i.completed), [items]);
-  const categories = useMemo(() => Array.from(new Set(activeItems.map(i => i.category))).sort(), [activeItems]);
+  const marketGroups = useMemo(() => {
+    const groups: Record<string, typeof activeItems> = {};
+    activeItems.forEach(i => {
+      if (!groups[i.market]) groups[i.market] = [];
+      groups[i.market].push(i);
+    });
+    return groups;
+  }, [activeItems]);
 
   const addItem = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -270,15 +277,19 @@ export default function App() {
                   </div>
                 </form>
 
-                {categories.map(cat => (
-                  <section key={cat} className="mt-6">
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-40 mb-3">{cat}</h2>
+                {Object.entries(marketGroups).map(([market, marketItems]) => (
+                  <section key={market} className="mt-6">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Store size={11} className="text-[var(--primary-color)]" />
+                      <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--primary-color)]">{market}</h2>
+                      <span className="text-[9px] font-black opacity-30 ml-auto">{marketItems.length} ürün</span>
+                    </div>
                     <div className="space-y-3">
-                      {activeItems.filter(i => i.category === cat).map(item => (
+                      {marketItems.map(item => (
                         <div key={item.id} className="flex items-center justify-between card-bg p-4 rounded-2xl shadow-sm active:bg-black/5 dark:active:bg-white/5" onClick={() => setItems(items.map(i => i.id === item.id ? {...i, completed: true} : i))}>
                           <div className="flex items-center gap-3">
                             <div className="w-7 h-7 rounded-full border-2 border-primary/30 flex items-center justify-center transition-colors" />
-                            <div><p className="font-bold text-sm">{item.name}</p><p className="text-[9px] text-[var(--primary-color)] font-black flex items-center gap-1 uppercase tracking-wider"><Store size={9} /> {item.market}</p></div>
+                            <p className="font-bold text-sm">{item.name}</p>
                           </div>
                           <button onClick={(e) => { e.stopPropagation(); setItems(items.filter(i => i.id !== item.id)); }} className="p-2 opacity-30 text-red-500"><X size={20}/></button>
                         </div>
