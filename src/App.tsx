@@ -22,7 +22,9 @@ import {
   BarChart2,
   Users,
   Copy,
-  LogIn
+  LogIn,
+  Download,
+  Upload
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { initializeApp } from 'firebase/app';
@@ -215,7 +217,59 @@ export default function App() {
   }, [receipts]);
   useEffect(() => { localStorage.setItem('fc_darkmode', JSON.stringify(isDarkMode)); }, [isDarkMode]);
 
-  // Tema Uygulama
+  // Yedekleme
+  const exportBackup = async () => {
+    const metas = receipts.map(({ id, date, receiptDate, storeName, total }) => ({ id, date, receiptDate, storeName, total }));
+    const photos: Record<string, string> = {};
+    for (const r of receipts) {
+      if (r.imageUrl) photos[r.id] = r.imageUrl;
+    }
+    const backup = {
+      version: 1,
+      exportDate: new Date().toISOString(),
+      history,
+      receiptsMeta: metas,
+      receiptPhotos: photos,
+      markets,
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `freshcart-yedek-${new Date().toLocaleDateString('tr-TR').replace(/\./g, '-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      try {
+        const backup = JSON.parse(reader.result as string);
+        if (!backup.version) throw new Error('Geçersiz yedek dosyası');
+        if (backup.history) setHistory(backup.history);
+        if (backup.markets) setMarkets(backup.markets);
+        if (backup.receiptsMeta && backup.receiptPhotos) {
+          const loaded: ReceiptPhoto[] = [];
+          for (const meta of backup.receiptsMeta) {
+            const imageUrl = backup.receiptPhotos[meta.id] || '';
+            if (imageUrl) await savePhoto(meta.id, imageUrl);
+            loaded.push({ ...meta, imageUrl });
+          }
+          setReceipts(loaded);
+        }
+        alert('Yedek başarıyla geri yüklendi!');
+      } catch {
+        alert('Hata: Geçersiz yedek dosyası.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  const backupInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isDarkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
@@ -737,6 +791,21 @@ export default function App() {
                   <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-4">Marketler</h2>
                   <div className="flex gap-2 mb-4"><input type="text" value={newMarketName} onChange={(e) => setNewMarketName(e.target.value)} placeholder="Yeni market..." className="flex-1 h-12 px-4 bg-black/5 dark:bg-white/5 rounded-xl outline-none text-sm" /><button onClick={() => { if(newMarketName.trim()) { setMarkets([...markets, newMarketName]); setNewMarketName(''); } }} className="bg-[#13ec5b] text-black px-4 rounded-xl font-black text-xs">EKLE</button></div>
                   <div className="grid grid-cols-2 gap-2">{markets.map(m => (<div key={m} className="bg-black/5 dark:bg-white/5 p-3 rounded-xl flex items-center justify-between"><span className="text-xs font-bold">{m}</span>{m !== 'Genel' && <button onClick={() => setMarkets(markets.filter(item => item !== m))} className="p-1 opacity-30 text-red-500"><X size={16}/></button>}</div>))}</div>
+                </section>
+
+                {/* Yedekleme */}
+                <section>
+                  <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-4">Veri Yedekleme</h2>
+                  <div className="card-bg p-4 rounded-2xl space-y-3">
+                    <p className="text-[10px] opacity-50 font-bold leading-relaxed">Fiş arşivini ve alışveriş geçmişini yedekle. Telefon değişikliğinde veya uygulama sıfırlandığında geri yükle.</p>
+                    <button onClick={exportBackup} className="w-full h-11 bg-[var(--primary-color)] text-black rounded-xl text-xs font-black flex items-center justify-center gap-2">
+                      <Download size={14}/> YEDEĞİ İNDİR
+                    </button>
+                    <button onClick={() => backupInputRef.current?.click()} className="w-full h-11 bg-black/5 dark:bg-white/10 rounded-xl text-xs font-black flex items-center justify-center gap-2">
+                      <Upload size={14}/> YEDEKTEN GERİ YÜKLE
+                    </button>
+                    <input ref={backupInputRef} type="file" accept=".json" className="hidden" onChange={importBackup} />
+                  </div>
                 </section>
 
                 {/* Yardım */}
