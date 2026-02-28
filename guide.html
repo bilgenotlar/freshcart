@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreshCart Kullanım Rehberi</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #13ec5b;
+    --dark: #0d0d0d;
+    --card: #161616;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8e8e8;
+    --muted: rgba(255,255,255,0.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--dark);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #0d0d0d 0%, #111 50%, #0a1a0f 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 24px 50px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%; transform: translateX(-50%);
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(19,236,91,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .logo-icon {
+    width: 52px; height: 52px;
+    background: var(--green);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+  }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+
+  header p {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 480px;
+    margin: 0 auto 28px;
+  }
+
+  .header-cta {
+    display: inline-block;
+    background: var(--green);
+    color: #000;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 12px 28px;
+    border-radius: 100px;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s;
+  }
+  .header-cta:hover { opacity: 0.85; }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,13,13,0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+
+  nav ul {
+    list-style: none;
+    display: inline-flex;
+    gap: 0;
+    min-width: max-content;
+  }
+
+  nav a {
+    display: block;
+    padding: 16px 18px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    border-bottom: 2px solid transparent;
+  }
+  nav a:hover { color: var(--green); }
+
+  /* MAIN */
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 100px;
+  }
+
+  /* SECTION */
+  section {
+    margin-bottom: 72px;
+    scroll-margin-top: 80px;
+  }
+
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 12px;
+  }
+
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 20px; height: 2px;
+    background: var(--green);
+    border-radius: 2px;
+  }
+
+  h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+
+  h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 28px 0 10px;
+  }
+
+  p { color: rgba(255,255,255,0.7); margin-bottom: 12px; font-size: 15px; }
+
+  /* SCREENSHOT PLACEHOLDER */
+  .screenshot {
+    width: 100%;
+    background: var(--card);
+    border: 1px dashed rgba(19,236,91,0.25);
+    border-radius: 20px;
+    padding: 40px 24px;
+    text-align: center;
+    margin: 24px 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .screenshot::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(19,236,91,0.02) 20px,
+      rgba(19,236,91,0.02) 40px
+    );
+  }
+
+  .screenshot-inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .screenshot-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    opacity: 0.4;
+  }
+
+  .screenshot-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--green);
+    opacity: 0.6;
+    margin-bottom: 4px;
+  }
+
+  .screenshot-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .screenshot img {
+    width: 100%;
+    border-radius: 12px;
+    display: block;
+  }
+
+  /* STEPS */
+  .steps {
+    counter-reset: steps;
+    list-style: none;
+    space-y: 16px;
+  }
+
+  .step {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    margin-bottom: 12px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 32px; height: 32px;
+    background: rgba(19,236,91,0.15);
+    border: 1px solid rgba(19,236,91,0.3);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--green);
+    counter-increment: steps;
+  }
+
+  .step-content p { margin: 0; font-size: 14px; }
+  .step-content strong { color: var(--text); }
+
+  /* TIP */
+  .tip {
+    display: flex;
+    gap: 12px;
+    background: rgba(19,236,91,0.06);
+    border: 1px solid rgba(19,236,91,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 20px 0;
+    align-items: flex-start;
+  }
+
+  .tip-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .tip p { margin: 0; font-size: 13px; color: rgba(255,255,255,0.65); }
+  .tip strong { color: var(--green); }
+
+  /* WARNING */
+  .warning {
+    display: flex;
+    gap: 12px;
+    background: rgba(255,170,0,0.06);
+    border: 1px solid rgba(255,170,0,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 20px 0;
+    align-items: flex-start;
+  }
+  .warning p { margin: 0; font-size: 13px; color: rgba(255,255,255,0.65); }
+  .warning strong { color: #ffaa00; }
+
+  /* FEATURE GRID */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 24px 0;
+  }
+
+  .feature {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+
+  .feature-icon { font-size: 24px; margin-bottom: 10px; }
+  .feature h4 { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .feature p { font-size: 12px; color: var(--muted); margin: 0; }
+
+  /* DIVIDER */
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 48px 0;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  footer a { color: var(--green); text-decoration: none; }
+
+  /* INLINE CODE */
+  code {
+    background: rgba(19,236,91,0.1);
+    color: var(--green);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  /* MOBILE */
+  @media (max-width: 600px) {
+    h2 { font-size: 22px; }
+    .features { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🛒</div>
+    <span class="logo-text">FreshCart</span>
+  </div>
+  <p>Akıllı market alışveriş uygulaması — alışveriş listesi, fiş arşivi, harcama takibi ve aile paylaşımı tek bir yerde.</p>
+  <a href="https://bilgenotlar.github.io/freshcart" class="header-cta">Uygulamayı Aç →</a>
+</header>
+
+<nav>
+  <ul>
+    <li><a href="#kurulum">Kurulum</a></li>
+    <li><a href="#liste">Alışveriş Listesi</a></li>
+    <li><a href="#fisler">Fişler</a></li>
+    <li><a href="#ozet">Harcama Özeti</a></li>
+    <li><a href="#gecmis">Geçmiş</a></li>
+    <li><a href="#paylasim">Aile Paylaşımı</a></li>
+    <li><a href="#ayarlar">Ayarlar</a></li>
+    <li><a href="#yedekleme">Yedekleme</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <!-- GİRİŞ -->
+  <section id="giris">
+    <div class="section-label">FreshCart Nedir?</div>
+    <h2>Her alışverişi daha kolay yap</h2>
+    <p>FreshCart; alışveriş listenizi düzenlemenizi, fişlerinizi arşivlemenizi, harcamalarınızı takip etmenizi ve aile üyeleriyle gerçek zamanlı liste paylaşmanızı sağlayan ücretsiz bir web uygulamasıdır.</p>
+    <p>Uygulama mağazasına gerek yok. Telefonunuzun tarayıcısından açılır, ana ekrana eklenir ve tıpkı bir uygulama gibi çalışır.</p>
+
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🛍️</div>
+        <h4>Alışveriş Listesi</h4>
+        <p>Market bazlı gruplandırma, hızlı ekleme</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🧾</div>
+        <h4>Fiş Arşivi</h4>
+        <p>Fotoğraf çek, tarih ve tutar gir</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">📊</div>
+        <h4>Harcama Özeti</h4>
+        <p>Aylık ve markete göre grafik</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">👨‍👩‍👧</div>
+        <h4>Aile Paylaşımı</h4>
+        <p>Gerçek zamanlı liste senkronizasyonu</p>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- KURULUM -->
+  <section id="kurulum">
+    <div class="section-label">Başlarken</div>
+    <h2>Kurulum — 3 adım</h2>
+    <p>Hiçbir uygulama indirmenize gerek yok. Tarayıcınızdan ana ekrana ekleyerek uygulama gibi kullanırsınız.</p>
+
+    <h3>Android (Chrome)</h3>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div class="step-content"><p>Chrome ile <strong>bilgenotlar.github.io/freshcart</strong> adresini açın.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div class="step-content"><p>Sağ üstteki <strong>⋮ menüsüne</strong> dokunun → <strong>"Ana ekrana ekle"</strong> seçin.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">3</div>
+        <div class="step-content"><p>İsmi onaylayın → <strong>"Ekle"</strong>. Artık ana ekranınızda uygulama ikonu görünür.</p></div>
+      </li>
+    </ol>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Android Chrome — Ana ekrana ekle adımları</p>
+      </div>
+    </div>
+
+    <h3>iPhone (Safari)</h3>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div class="step-content"><p><strong>Safari</strong> ile adresi açın. (Chrome'da bu özellik iPhone'da çalışmaz.)</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div class="step-content"><p>Alt ortadaki <strong>paylaş ikonuna</strong> (kutudan ok çıkan) dokunun.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">3</div>
+        <div class="step-content"><p>Aşağı kaydırın → <strong>"Ana Ekrana Ekle"</strong> → <strong>"Ekle"</strong>.</p></div>
+      </li>
+    </ol>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">iPhone Safari — Ana ekrana ekle adımları</p>
+      </div>
+    </div>
+
+    <div class="tip">
+      <div class="tip-icon">💡</div>
+      <p><strong>İpucu:</strong> Ana ekrana ekledikten sonra uygulamayı her zaman o ikondan açın. Böylece tam ekran, uygulama gibi çalışır.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ALIŞVERİŞ LİSTESİ -->
+  <section id="liste">
+    <div class="section-label">1. Sekme</div>
+    <h2>Alışveriş Listesi</h2>
+    <p>Uygulamanın ana ekranı. Alacağınız ürünleri markete göre gruplandırarak listeler.</p>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Alışveriş listesi — market grupları görünümü</p>
+      </div>
+    </div>
+
+    <h3>Ürün Ekleme</h3>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div class="step-content"><p>Üstteki arama kutusuna ürün adını yazın (örn: <strong>Yoğurt</strong>).</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div class="step-content"><p>Sağdaki market seçiciden marketi seçin <strong>→ otomatik eklenir.</strong></p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">3</div>
+        <div class="step-content"><p>Ya da marketi değiştirmeden <strong>Enter</strong>'a basın — mevcut markete eklenir.</p></div>
+      </li>
+    </ol>
+
+    <div class="tip">
+      <div class="tip-icon">⚡</div>
+      <p><strong>Hızlı yol:</strong> Ürün adını yazıp market seçince otomatik eklenir, tekrar dokunmanıza gerek yok. Sıradaki ürüne geçebilirsiniz.</p>
+    </div>
+
+    <h3>Ürün Alma (Sepete Koyma)</h3>
+    <p>Markette ürünü aldığınızda listedeki ürüne <strong>bir kez dokunun</strong>. Üzeri çizilir ve "Alınanlar" bölümüne taşınır.</p>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Ürün alındı görünümü — üstü çizili durum</p>
+      </div>
+    </div>
+
+    <h3>Market Değiştirme</h3>
+    <p>Planladığınız markette ürün bulamazsanız başka marketten alabilirsiniz. Ürünü silmenize gerek yok:</p>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div class="step-content"><p>Listedeki ürüne <strong>1 saniye basılı tutun.</strong></p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div class="step-content"><p>Altta market seçici açılır — yeni markete dokunun.</p></div>
+      </li>
+    </ol>
+
+    <h3>Alışverişi Bitirme</h3>
+    <p>"Alınanlar" bölümünde <strong>"BİTİR"</strong> butonuna basın. Liste geçmişe kaydedilir ve yeni bir alışveriş için temizlenir.</p>
+  </section>
+
+  <hr>
+
+  <!-- FİŞLER -->
+  <section id="fisler">
+    <div class="section-label">2. Sekme</div>
+    <h2>Fişler</h2>
+    <p>Market fişlerinizi fotoğraflayarak arşivleyin. Tarihe göre gruplandırılır, günlük toplam otomatik hesaplanır.</p>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Fişler sekmesi — günlük gruplar</p>
+      </div>
+    </div>
+
+    <h3>Fiş Ekleme</h3>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div class="step-content"><p><strong>"FİŞ FOTOĞRAFI EKLE"</strong> butonuna dokunun → kamera açılır.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div class="step-content"><p>Fişi çekip onaylayın.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">3</div>
+        <div class="step-content"><p>Fişin <strong>tarihini, marketini ve toplam tutarını</strong> girin.</p></div>
+      </li>
+    </ol>
+
+    <div class="tip">
+      <div class="tip-icon">💡</div>
+      <p><strong>Geçmiş fiş:</strong> Tarihi manuel olarak değiştirebilirsiniz. Geçen hafta çekmeyi unuttuğunuz fişi de ekleyebilirsiniz.</p>
+    </div>
+
+    <h3>Fişi Görüntüleme</h3>
+    <p>Fişe dokunun → tam ekran açılır. Büyütmek için parmaklarınızla zoom yapabilirsiniz.</p>
+
+    <div class="warning">
+      <div class="tip-icon">⚠️</div>
+      <p><strong>Dikkat:</strong> Fiş fotoğrafları yalnızca bu cihazda saklanır. Telefonunuzu değiştirmeden önce mutlaka <strong>yedek alın</strong> (Ayarlar → Veri Yedekleme).</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- HARCAMA ÖZETİ -->
+  <section id="ozet">
+    <div class="section-label">3. Sekme</div>
+    <h2>Harcama Özeti</h2>
+    <p>Fişlere girdiğiniz tutarlardan otomatik grafik oluşturulur. Ne zaman, nereye, ne kadar harcadığınızı bir bakışta görürsünüz.</p>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Özet sekmesi — aylık grafik ve market karşılaştırması</p>
+      </div>
+    </div>
+
+    <h3>Ne Gösterir?</h3>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">📊</div>
+        <div class="step-content"><p><strong>Toplam harcama</strong>, fiş sayısı ve fiş başı ortalama.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">📅</div>
+        <div class="step-content"><p><strong>Aylık grafik</strong> — hangi ay daha fazla harcandı?</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">🏪</div>
+        <div class="step-content"><p><strong>Markete göre harcama</strong> — en çok nereye para gitti?</p></div>
+      </li>
+    </ol>
+
+    <h3>Aile Harcamaları</h3>
+    <p>Diğer aile üyelerinin harcamalarını manuel olarak girebilirsiniz. Ad, tarih ve tutar girin — genel toplama otomatik eklenir.</p>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Aile harcamaları giriş formu</p>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- GEÇMİŞ -->
+  <section id="gecmis">
+    <div class="section-label">4. Sekme</div>
+    <h2>Alışveriş Geçmişi</h2>
+    <p>Tamamlanan alışverişler otomatik kaydedilir. Her alışverişte hangi ürünü hangi marketten aldığınızı görebilirsiniz.</p>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Geçmiş sekmesi — alışveriş listesi detayları</p>
+      </div>
+    </div>
+
+    <div class="tip">
+      <div class="tip-icon">💡</div>
+      <p><strong>İpucu:</strong> Geçmiş alışverişe dokunun — o alışverişte aldığınız tüm ürünler ve marketler listelenir.</p>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- AİLE PAYLAŞIMI -->
+  <section id="paylasim">
+    <div class="section-label">Aile Paylaşımı</div>
+    <h2>Gerçek Zamanlı Liste Paylaşımı</h2>
+    <p>Aynı listeyi aile üyeleriyle paylaşın. Biri ürün eklediğinde diğeri anında görür. Her ürünün yanında kimin eklediği yazar.</p>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Listede "Kemal ekledi" etiketi görünümü</p>
+      </div>
+    </div>
+
+    <h3>Oda Kurulumu (İlk Kişi)</h3>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div class="step-content"><p><strong>Ayarlar → Aile Paylaşımı</strong> bölümüne gidin.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div class="step-content"><p>Adınızı girin (örn: <code>Kemal</code>).</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">3</div>
+        <div class="step-content"><p><strong>"Yeni Oda Oluştur"</strong> butonuna basın → oda kodunuz oluşur.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">4</div>
+        <div class="step-content"><p>Oda kodunu <strong>WhatsApp ile</strong> diğer kişiye gönderin.</p></div>
+      </li>
+    </ol>
+
+    <h3>Odaya Katılma (Diğer Kişi)</h3>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div class="step-content"><p>Uygulamayı açın → <strong>Ayarlar → Aile Paylaşımı</strong>.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div class="step-content"><p>Adını girin, oda kodunu yazın → <strong>"Gir"</strong> butonuna basın.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">3</div>
+        <div class="step-content"><p>Artık aynı listeyi görürsünüz. ✅</p></div>
+      </li>
+    </ol>
+
+    <div class="tip">
+      <div class="tip-icon">🔒</div>
+      <p><strong>Güvenlik:</strong> Oda kodunu bilmeden kimse listenize erişemez. Fişler ve geçmiş her zaman kişiseldir, paylaşılmaz.</p>
+    </div>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Aile paylaşımı ayar ekranı — oda kodu görünümü</p>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- AYARLAR -->
+  <section id="ayarlar">
+    <div class="section-label">5. Sekme</div>
+    <h2>Ayarlar</h2>
+
+    <h3>🌙 Karanlık / Açık Mod</h3>
+    <p>Uygulamanın temasını değiştirin. Varsayılan karanlık moddur.</p>
+
+    <h3>🏪 Marketler</h3>
+    <p>Kendi alışveriş yaptığınız marketleri ekleyip çıkarabilirsiniz. Eklediğiniz market ürün ekleme ekranında seçenek olarak görünür.</p>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Ayarlar sekmesi — market listesi yönetimi</p>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- YEDEKLEME -->
+  <section id="yedekleme">
+    <div class="section-label">Önemli</div>
+    <h2>Veri Yedekleme</h2>
+    <p>Tüm verileriniz yalnızca cihazınızda saklanır. Telefonunuzu değiştirmeden veya uygulamayı sıfırlamadan önce yedek almanızı öneririz.</p>
+
+    <h3>Yedek Alma</h3>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div class="step-content"><p><strong>Ayarlar → Veri Yedekleme → "YEDEĞİ İNDİR"</strong> butonuna basın.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div class="step-content"><p>Telefonunuza <code>.json</code> dosyası indirilir. Güvenli bir yere (bulut depolama, e-posta vb.) kopyalayın.</p></div>
+      </li>
+    </ol>
+
+    <h3>Yedekten Geri Yükleme</h3>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div class="step-content"><p><strong>Ayarlar → Veri Yedekleme → "YEDEKTEN GERİ YÜKLE"</strong> butonuna basın.</p></div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div class="step-content"><p>İndirdiğiniz <code>.json</code> dosyasını seçin — tüm verileriniz geri gelir.</p></div>
+      </li>
+    </ol>
+
+    <div class="warning">
+      <div class="tip-icon">⚠️</div>
+      <p><strong>Unutmayın:</strong> Tarayıcı verilerini temizlemek veya telefonu fabrika ayarlarına döndürmek uygulamadaki tüm verileri siler. Düzenli yedek alın.</p>
+    </div>
+
+    <div class="screenshot">
+      <div class="screenshot-inner">
+        <div class="screenshot-icon">📸</div>
+        <div class="screenshot-label">Ekran Görüntüsü</div>
+        <p class="screenshot-desc">Veri yedekleme ekranı</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>© F. Kemal Sönmez — 2026 &nbsp;·&nbsp; <a href="https://bilgenotlar.github.io/freshcart">Uygulamayı Aç</a> &nbsp;·&nbsp; <a href="https://github.com/bilgenotlar/freshcart">GitHub</a></p>
+</footer>
+
+</body>
+</html>

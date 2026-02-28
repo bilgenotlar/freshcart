@@ -900,7 +900,10 @@ export default function App() {
 
                 {/* Yardım */}
                 <section>
-                  <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-4">Nasıl Kullanılır?</h2>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest">Nasıl Kullanılır?</h2>
+                    <a href="https://bilgenotlar.github.io/freshcart/guide.html" target="_blank" rel="noopener noreferrer" className="text-[9px] font-black opacity-50 text-[var(--primary-color)]">Tam Rehber →</a>
+                  </div>
                   <div className="space-y-3">
                     {[
                       { icon: '🛒', title: 'Alışveriş Listesi', desc: 'Ürün adını yaz, sağdan marketi seç — otomatik eklenir. Ürüne dokununca sepete alınmış sayılır. "BİTİR" ile alışverişi tamamla.' },
