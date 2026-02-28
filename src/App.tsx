@@ -126,6 +126,13 @@ interface ReceiptPhoto extends ReceiptMeta {
   imageUrl: string; // sadece bellekte, render için
 }
 
+interface FamilyExpense {
+  id: string;
+  name: string;
+  date: string; // YYYY-MM-DD
+  total: number;
+}
+
 export default function App() {
   const [view, setView] = useState<'list' | 'history' | 'receipts' | 'stats' | 'settings'>('list');
   
@@ -140,6 +147,7 @@ export default function App() {
   const [history, setHistory] = useState<HistoryTrip[]>(() => getSavedData('fc_history', []));
   const [markets, setMarkets] = useState<string[]>(() => getSavedData('fc_markets', ['Genel', 'Migros', 'BİM', 'A101', 'Şok', 'Kasap']));
   const [receipts, setReceipts] = useState<ReceiptPhoto[]>([]);
+  const [familyExpenses, setFamilyExpenses] = useState<FamilyExpense[]>(() => getSavedData('fc_family_expenses', []));
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => getSavedData('fc_darkmode', true));
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
 
@@ -186,6 +194,9 @@ export default function App() {
   
   const [changingMarketId, setChangingMarketId] = useState<string | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [newFamilyName, setNewFamilyName] = useState('');
+  const [newFamilyDate, setNewFamilyDate] = useState(new Date().toISOString().split('T')[0]);
+  const [newFamilyTotal, setNewFamilyTotal] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const today = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -215,7 +226,7 @@ export default function App() {
     const metas: ReceiptMeta[] = receipts.map(({ id, date, receiptDate, storeName, total }) => ({ id, date, receiptDate, storeName, total }));
     localStorage.setItem('fc_receipts_meta', JSON.stringify(metas));
   }, [receipts]);
-  useEffect(() => { localStorage.setItem('fc_darkmode', JSON.stringify(isDarkMode)); }, [isDarkMode]);
+  useEffect(() => { localStorage.setItem('fc_family_expenses', JSON.stringify(familyExpenses)); }, [familyExpenses]);
 
   // Yedekleme
   const exportBackup = async () => {
@@ -231,6 +242,7 @@ export default function App() {
       receiptsMeta: metas,
       receiptPhotos: photos,
       markets,
+      familyExpenses,
     };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -251,6 +263,7 @@ export default function App() {
         if (!backup.version) throw new Error('Geçersiz yedek dosyası');
         if (backup.history) setHistory(backup.history);
         if (backup.markets) setMarkets(backup.markets);
+        if (backup.familyExpenses) setFamilyExpenses(backup.familyExpenses);
         if (backup.receiptsMeta && backup.receiptPhotos) {
           const loaded: ReceiptPhoto[] = [];
           for (const meta of backup.receiptsMeta) {
@@ -702,6 +715,83 @@ export default function App() {
                           </div>
                         </section>
                       )}
+
+                      {/* Aile Harcamaları */}
+                      <section className="card-bg rounded-2xl p-4">
+                        <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-4">Aile Harcamaları</h2>
+                        
+                        {/* Giriş formu */}
+                        <div className="space-y-2 mb-4">
+                          <input
+                            type="text"
+                            placeholder="Ad (örn: Zeynep)"
+                            value={newFamilyName}
+                            onChange={e => setNewFamilyName(e.target.value)}
+                            className="w-full h-10 px-3 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-bold"
+                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="date"
+                              value={newFamilyDate}
+                              onChange={e => setNewFamilyDate(e.target.value)}
+                              className="flex-1 h-10 px-3 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm"
+                            />
+                            <div className="relative flex-1">
+                              <input
+                                type="number"
+                                inputMode="decimal"
+                                placeholder="Tutar"
+                                value={newFamilyTotal}
+                                onChange={e => setNewFamilyTotal(e.target.value)}
+                                className="w-full h-10 pl-3 pr-7 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-sm font-bold"
+                              />
+                              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs opacity-40">₺</span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (!newFamilyName.trim() || !newFamilyTotal || !newFamilyDate) return;
+                              setFamilyExpenses(prev => [...prev, {
+                                id: Date.now().toString(),
+                                name: newFamilyName.trim(),
+                                date: newFamilyDate,
+                                total: parseFloat(newFamilyTotal)
+                              }]);
+                              setNewFamilyName('');
+                              setNewFamilyTotal('');
+                            }}
+                            className="w-full h-10 bg-[var(--primary-color)] text-black rounded-xl text-xs font-black"
+                          >EKLE</button>
+                        </div>
+
+                        {/* Liste */}
+                        {familyExpenses.length > 0 && (
+                          <div className="space-y-2 mb-3">
+                            {[...familyExpenses].sort((a,b) => b.date.localeCompare(a.date)).map(fe => (
+                              <div key={fe.id} className="flex items-center justify-between bg-black/5 dark:bg-white/5 px-3 py-2 rounded-xl">
+                                <div>
+                                  <p className="text-xs font-black">{fe.name}</p>
+                                  <p className="text-[9px] opacity-40 font-bold">{new Date(fe.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-black text-[var(--primary-color)]">{fe.total.toLocaleString('tr-TR', {minimumFractionDigits:2})} ₺</p>
+                                  <button onClick={() => { if (window.confirm('Bu kayıt silinsin mi?')) setFamilyExpenses(prev => prev.filter(x => x.id !== fe.id)); }} className="p-1 opacity-30 text-red-500"><X size={16}/></button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Genel toplam */}
+                        {familyExpenses.length > 0 && (
+                          <div className="border-t border-black/10 dark:border-white/10 pt-3 flex justify-between items-center">
+                            <span className="text-[10px] font-black opacity-50 uppercase tracking-wider">Aile Toplamı</span>
+                            <span className="text-base font-black text-[var(--primary-color)]">
+                              {(familyExpenses.reduce((s,fe) => s + fe.total, 0) + grandTotal).toLocaleString('tr-TR', {minimumFractionDigits:2})} ₺
+                            </span>
+                          </div>
+                        )}
+                      </section>
                     </>
                   );
                 })()}
