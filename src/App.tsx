@@ -900,10 +900,7 @@ export default function App() {
 
                 {/* Yardım */}
                 <section>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest">Nasıl Kullanılır?</h2>
-                    <a href="https://bilgenotlar.github.io/freshcart/guide.html" target="_blank" rel="noopener noreferrer" className="text-[9px] font-black opacity-50 text-[var(--primary-color)]">Tam Rehber →</a>
-                  </div>
+                  <h2 className="text-[10px] font-black text-[var(--primary-color)] uppercase tracking-widest mb-4">Hızlı Kullanım Rehberi</h2>
                   <div className="space-y-3">
                     {[
                       { icon: '🛒', title: 'Alışveriş Listesi', desc: 'Ürün adını yaz, sağdan marketi seç — otomatik eklenir. Ürüne dokununca sepete alınmış sayılır. "BİTİR" ile alışverişi tamamla.' },
@@ -920,6 +917,15 @@ export default function App() {
                       </div>
                     ))}
                   </div>
+
+                  <a
+                    href="https://bilgenotlar.github.io/freshcart/guide.html"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 flex items-center justify-center gap-2 w-full h-12 rounded-2xl border-2 border-[var(--primary-color)] text-[var(--primary-color)] text-xs font-black tracking-wider"
+                  >
+                    📖 TAM KULLANIM REHBERİ
+                  </a>
                 </section>
 
                 {/* Copyright */}
