@@ -182,6 +182,8 @@ export default function App() {
   const [newMarketName, setNewMarketName] = useState('');
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
   
+  const [changingMarketId, setChangingMarketId] = useState<string | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const today = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -349,7 +351,14 @@ export default function App() {
                     </div>
                     <div className="space-y-3">
                       {marketItems.map(item => (
-                        <div key={item.id} className="flex items-center justify-between card-bg p-4 rounded-2xl shadow-sm active:bg-black/5 dark:active:bg-white/5" onClick={() => setItems(items.map(i => i.id === item.id ? {...i, completed: true} : i))}>
+                        <div key={item.id}
+                          className="flex items-center justify-between card-bg p-4 rounded-2xl shadow-sm active:bg-black/5 dark:active:bg-white/5 select-none"
+                          onClick={() => setItems(items.map(i => i.id === item.id ? {...i, completed: true} : i))}
+                          onContextMenu={(e) => { e.preventDefault(); setChangingMarketId(item.id); }}
+                          onTouchStart={() => { const t = setTimeout(() => setChangingMarketId(item.id), 600); setLongPressTimer(t); }}
+                          onTouchEnd={() => { clearTimeout(longPressTimer!); }}
+                          onTouchMove={() => { clearTimeout(longPressTimer!); }}
+                        >
                           <div className="flex items-center gap-3">
                             <div className="w-7 h-7 rounded-full border-2 border-primary/30 flex items-center justify-center transition-colors" />
                             <div>
@@ -384,6 +393,33 @@ export default function App() {
                     )}
                   </section>
                 )}
+                {/* Market Değiştirme Modalı */}
+                <AnimatePresence>
+                  {changingMarketId && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-[100] bg-black/60 flex items-end justify-center"
+                      onClick={() => setChangingMarketId(null)}
+                    >
+                      <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }}
+                        className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-t-3xl p-6 pb-12"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <p className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">Market Değiştir</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {markets.map(m => (
+                            <button key={m} onClick={() => {
+                              setItems(items.map(i => i.id === changingMarketId ? {...i, market: m} : i));
+                              setChangingMarketId(null);
+                            }}
+                              className="h-12 rounded-2xl bg-black/5 dark:bg-white/10 font-black text-sm active:bg-[var(--primary-color)] active:text-black"
+                            >{m}</button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
               </motion.div>
             )}
 
