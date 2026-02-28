@@ -404,7 +404,7 @@ export default function App() {
                       <div className="flex items-center justify-between mb-1"><div className="flex items-center gap-2 text-[var(--primary-color)] font-black text-[10px] uppercase tracking-widest"><Store size={14} />{trip.store}</div>{expandedHistoryId === trip.id ? <ChevronUp size={18} /> : <ChevronDown size={18} />}</div>
                       <h3 className="font-black text-base mb-1">{trip.itemCount} Ürün</h3>
                       <p className="text-[10px] opacity-40 font-bold uppercase">{trip.date}</p>
-                      <button onClick={(e) => { e.stopPropagation(); setHistory(history.filter(t => t.id !== trip.id)); }} className="absolute bottom-5 right-5 text-red-500 opacity-20"><Trash2 size={18}/></button>
+                      <button onClick={(e) => { e.stopPropagation(); if (window.confirm('Bu alışveriş kaydı silinsin mi?')) setHistory(history.filter(t => t.id !== trip.id)); }} className="absolute bottom-5 right-5 text-red-500 opacity-20"><Trash2 size={18}/></button>
                     </div>
                     <AnimatePresence>{expandedHistoryId === trip.id && (<motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="bg-black/5 dark:bg-white/5 border-t border-black/5 dark:border-white/5 px-5 py-4 overflow-hidden"><div className="space-y-3">{trip.detailedItems.map((detail, idx) => (<div key={idx} className="flex justify-between items-center text-xs font-bold"><div className="flex items-center gap-2"><Tag size={12} className="text-[var(--primary-color)]" /><span>{detail.name}</span></div><span className="text-[9px] bg-primary/20 text-[var(--primary-color)] px-2 py-1 rounded-md uppercase">{detail.market}</span></div>))}</div></motion.div>)}</AnimatePresence>
                   </div>
@@ -526,7 +526,7 @@ export default function App() {
                                   </p>
                                 )}
                               </div>
-                              <button onClick={() => { deletePhoto(r.id); setReceipts(receipts.filter(x => x.id !== r.id)); }} className="p-1 opacity-30 text-red-500 flex-shrink-0">
+                              <button onClick={() => { if (window.confirm('Bu fiş silinsin mi?')) { deletePhoto(r.id); setReceipts(receipts.filter(x => x.id !== r.id)); } }} className="p-1 opacity-30 text-red-500 flex-shrink-0">
                                 <Trash2 size={18}/>
                               </button>
                             </div>
