@@ -609,7 +609,18 @@ export default function App() {
                   {viewingPhoto && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black flex items-center justify-center" onClick={() => setViewingPhoto(null)}>
                       <button className="absolute top-6 right-6 bg-white/10 p-3 rounded-full z-10"><X size={22} className="text-white" /></button>
-                      <img src={viewingPhoto} className="max-w-full max-h-full object-contain" alt="Fiş" onClick={e => e.stopPropagation()} />
+                      <div
+                        className="w-full h-full flex items-center justify-center overflow-hidden"
+                        onClick={e => e.stopPropagation()}
+                        style={{ touchAction: 'pinch-zoom' }}
+                      >
+                        <img
+                          src={viewingPhoto}
+                          className="max-w-full max-h-full object-contain"
+                          alt="Fiş"
+                          style={{ touchAction: 'pinch-zoom', userSelect: 'none' }}
+                        />
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
