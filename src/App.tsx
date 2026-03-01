@@ -373,7 +373,7 @@ export default function App() {
             <div className="flex items-center gap-2">
               <ShoppingBasket className="text-[var(--primary-color)]" size={28} />
               <h1 className="text-2xl font-bold tracking-tight uppercase">
-                {view === 'list' ? 'Listem' : view === 'history' ? 'Geçmiş' : view === 'receipts' ? 'Fişlerim' : 'Ayarlar'}
+                {view === 'list' ? 'Listem' : view === 'history' ? 'Geçmiş' : view === 'receipts' ? 'Fişlerim' : view === 'stats' ? 'Özet' : 'Ayarlar'}
               </h1>
             </div>
             <div className="opacity-60 text-[10px] font-bold flex items-center gap-1 uppercase tracking-tighter">
