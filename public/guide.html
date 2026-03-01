@@ -175,59 +175,16 @@
   .screenshot {
     width: 100%;
     background: var(--card);
-    border: 1px dashed rgba(19,236,91,0.25);
+    border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 40px 24px;
-    text-align: center;
     margin: 24px 0;
-    position: relative;
     overflow: hidden;
-  }
-
-  .screenshot::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 20px,
-      rgba(19,236,91,0.02) 20px,
-      rgba(19,236,91,0.02) 40px
-    );
-  }
-
-  .screenshot-inner {
-    position: relative;
-    z-index: 1;
-  }
-
-  .screenshot-icon {
-    font-size: 32px;
-    margin-bottom: 10px;
-    opacity: 0.4;
-  }
-
-  .screenshot-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--green);
-    opacity: 0.6;
-    margin-bottom: 4px;
-  }
-
-  .screenshot-desc {
-    font-size: 12px;
-    color: var(--muted);
-    margin: 0;
   }
 
   .screenshot img {
     width: 100%;
-    border-radius: 12px;
     display: block;
+    border-radius: 20px;
   }
 
   /* STEPS */
@@ -431,9 +388,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 01-guide-kurulum-android.png</div>
-        <p class="screenshot-desc">Android Chrome — Ana ekrana ekle adımları</p>
+        <img src="images/01-guide-kurulum-android.png" alt="Android Chrome — Ana ekrana ekle adımları" />
       </div>
     </div>
 
@@ -455,9 +410,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 02-guide-kurulum-iphone.png</div>
-        <p class="screenshot-desc">iPhone Safari — Ana ekrana ekle adımları</p>
+        <img src="images/02-guide-kurulum-iphone.png" alt="iPhone Safari — Ana ekrana ekle adımları" />
       </div>
     </div>
 
@@ -477,9 +430,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 03-guide-liste-genel.png</div>
-        <p class="screenshot-desc">Alışveriş listesi — market grupları görünümü</p>
+        <img src="images/03-guide-liste-genel.png" alt="Alışveriş listesi — market grupları görünümü" />
       </div>
     </div>
 
@@ -509,9 +460,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 04-guide-liste-sepete-alindi.png</div>
-        <p class="screenshot-desc">Ürün alındı görünümü — üstü çizili durum</p>
+        <img src="images/04-guide-liste-sepete-alindi.png" alt="Ürün alındı görünümü — üstü çizili durum" />
       </div>
     </div>
 
@@ -530,9 +479,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 05-guide-liste-market-degistir.png</div>
-        <p class="screenshot-desc">Market değiştirme — alttan açılan seçici</p>
+        <img src="images/05-guide-liste-market-degistir.png" alt="Market değiştirme — alttan açılan seçici" />
       </div>
     </div>
 
@@ -550,9 +497,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 06-guide-fisler-genel.png</div>
-        <p class="screenshot-desc">Fişler sekmesi — günlük gruplar</p>
+        <img src="images/06-guide-fisler-genel.png" alt="Fişler sekmesi — günlük gruplar" />
       </div>
     </div>
 
@@ -596,9 +541,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 07-guide-ozet-grafik.png</div>
-        <p class="screenshot-desc">Özet sekmesi — aylık grafik ve market karşılaştırması</p>
+        <img src="images/07-guide-ozet-grafik.png" alt="Özet sekmesi — aylık grafik ve market karşılaştırması" />
       </div>
     </div>
 
@@ -623,9 +566,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 08-guide-ozet-aile-harcama.png</div>
-        <p class="screenshot-desc">Aile harcamaları giriş formu</p>
+        <img src="images/08-guide-ozet-aile-harcama.png" alt="Aile harcamaları giriş formu" />
       </div>
     </div>
   </section>
@@ -640,9 +581,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 09-guide-gecmis-detay.png</div>
-        <p class="screenshot-desc">Geçmiş sekmesi — alışveriş listesi detayları</p>
+        <img src="images/09-guide-gecmis-detay.png" alt="Geçmiş sekmesi — alışveriş listesi detayları" />
       </div>
     </div>
 
@@ -687,17 +626,13 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 10-guide-aile-paylasim-ayar.png</div>
-        <p class="screenshot-desc">Aile paylaşımı ayar ekranı — oda kodu görünümü</p>
+        <img src="images/10-guide-aile-paylasim-ayar.png" alt="Aile paylaşımı ayar ekranı — oda kodu görünümü" />
       </div>
     </div>
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 11-guide-aile-paylasim-liste.png</div>
-        <p class="screenshot-desc">Listede "Kemal ekledi" etiketi görünümü</p>
+        <img src="images/11-guide-aile-paylasim-liste.png" alt="Listede "Kemal ekledi" etiketi görünümü" />
       </div>
     </div>
 
@@ -732,9 +667,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 12-guide-whatsapp-paylasim.png</div>
-        <p class="screenshot-desc">WhatsApp'a gönderilen liste görünümü</p>
+        <img src="images/12-guide-whatsapp-paylasim.png" alt="WhatsApp'a gönderilen liste görünümü" />
       </div>
     </div>
   </section>
@@ -754,9 +687,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 13-guide-marketler.png</div>
-        <p class="screenshot-desc">Ayarlar — market listesi yönetimi</p>
+        <img src="images/13-guide-marketler.png" alt="Ayarlar — market listesi yönetimi" />
       </div>
     </div>
   </section>
@@ -800,9 +731,7 @@
 
     <div class="screenshot">
       <div class="screenshot-inner">
-        <div class="screenshot-icon">📸</div>
-        <div class="screenshot-label">Ekran Görüntüsü — 14-guide-yedekleme.png</div>
-        <p class="screenshot-desc">Veri yedekleme ekranı</p>
+        <img src="images/14-guide-yedekleme.png" alt="Veri yedekleme ekranı" />
       </div>
     </div>
   </section>
