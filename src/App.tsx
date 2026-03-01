@@ -403,7 +403,7 @@ export default function App() {
                   </div>
                   <div className="relative">
                     <select value={selectedMarket} onChange={(e) => { setSelectedMarket(e.target.value); if (newItemName.trim()) { setItems(prev => [{ id: Date.now().toString(), name: newItemName.trim(), category: 'DİĞER', market: e.target.value, quantity: 1, completed: false, addedBy: userName || undefined }, ...prev]); setNewItemName(''); inputRef.current?.focus(); } }} className="h-14 px-4 bg-black/5 dark:bg-white/5 rounded-2xl border-none outline-none text-xs font-black text-[var(--primary-color)] appearance-none min-w-[90px] dark:text-[#13ec5b]">
-                      {markets.map(m => <option key={m} value={m}>{m}</option>)}
+                      {[...markets].sort((a,b) => a.localeCompare(b, 'tr')).map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
                     <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none opacity-40" />
                   </div>
@@ -573,7 +573,7 @@ export default function App() {
                                   className="w-full h-9 px-3 bg-black/5 dark:bg-white/10 rounded-xl outline-none text-xs font-black text-[var(--primary-color)] appearance-none"
                                 >
                                   <option value="">Market seç...</option>
-                                  {markets.map(m => <option key={m} value={m}>{m}</option>)}
+                                  {[...markets].sort((a,b) => a.localeCompare(b, 'tr')).map(m => <option key={m} value={m}>{m}</option>)}
                                 </select>
                                 {/* Tutar girişi */}
                                 <div className="relative">
@@ -963,7 +963,7 @@ export default function App() {
               >
                 <p className="text-[10px] font-black opacity-40 uppercase tracking-widest mb-4">Market Değiştir</p>
                 <div className="grid grid-cols-2 gap-2">
-                  {markets.map(m => (
+                  {[...markets].sort((a,b) => a.localeCompare(b, 'tr')).map(m => (
                     <button key={m} onClick={() => {
                       setItems(items.map(i => i.id === changingMarketId ? {...i, market: m} : i));
                       setChangingMarketId(null);
